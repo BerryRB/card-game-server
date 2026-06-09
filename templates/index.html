@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>朝阳升级</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=__ASSET_VERSION__">
+</head>
+<body>
+    <div id="lobby" class="screen active">
+        <main class="lobby-shell">
+            <section class="brand-panel">
+                <div class="brand-kicker">四人实时牌桌</div>
+                <h1>朝阳升级</h1>
+                <p>南西北东四座实时对局，底牌、亮主、扣牌、出牌和手牌操作集中在同一张桌面上，电脑和手机浏览器都可直接开局。</p>
+                <div class="brand-stats">
+                    <span>四人座位</span>
+                    <span>人机试玩</span>
+                    <span>实时同步</span>
+                </div>
+            </section>
+
+            <section class="lobby-card">
+                <div class="field">
+                    <label for="playerName">昵称</label>
+                    <input type="text" id="playerName" placeholder="输入你的昵称" maxlength="10" value="玩家">
+                </div>
+                <div class="field">
+                    <label for="roomId">房间号</label>
+                    <input type="text" id="roomId" placeholder="输入或创建房间" maxlength="8">
+                </div>
+                <div class="lobby-actions">
+                    <button id="joinBtn" class="btn primary" type="button" onclick="joinRoom()">加入房间</button>
+                    <button id="createBtn" class="btn secondary" type="button" onclick="createRoom()">创建房间</button>
+                    <button id="robotPlayBtn" class="btn ghost" type="button" onclick="startRobotRoom()">人机试玩</button>
+                </div>
+                <div class="room-list-header">
+                    <span>房间列表</span>
+                    <button class="link-btn" type="button" onclick="loadRooms()">刷新</button>
+                </div>
+                <div id="roomList" class="room-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <div id="room" class="screen">
+        <main class="room-shell">
+            <header class="room-topbar">
+                <div>
+                    <span class="label">房间号</span>
+                    <strong id="displayRoomId">----</strong>
+                </div>
+                <button class="btn ghost compact" type="button" onclick="leaveRoom()">离开</button>
+            </header>
+
+            <section class="seat-board">
+                <button class="seat-card" id="seat0" type="button" onclick="selectSeat(0)">
+                    <span class="seat-role">我方</span>
+                    <strong class="seat-name">空位</strong>
+                    <span class="seat-label">南</span>
+                </button>
+                <button class="seat-card" id="seat1" type="button" onclick="selectSeat(1)">
+                    <span class="seat-role">左手</span>
+                    <strong class="seat-name">空位</strong>
+                    <span class="seat-label">西</span>
+                </button>
+                <button class="seat-card" id="seat2" type="button" onclick="selectSeat(2)">
+                    <span class="seat-role">上家</span>
+                    <strong class="seat-name">空位</strong>
+                    <span class="seat-label">北</span>
+                </button>
+                <button class="seat-card" id="seat3" type="button" onclick="selectSeat(3)">
+                    <span class="seat-role">右手</span>
+                    <strong class="seat-name">空位</strong>
+                    <span class="seat-label">东</span>
+                </button>
+            </section>
+
+            <p class="room-note">点击空位换座。游戏为南、西、北、东四人升级玩法。</p>
+            <button id="startBtn" class="btn primary wide" type="button" onclick="startGame()">开始游戏</button>
+        </main>
+    </div>
+
+    <div id="game" class="screen">
+        <main class="table-shell">
+            <header class="game-hud">
+                <div class="hud-item">
+                    <span>房间</span>
+                    <strong id="hudRoom">----</strong>
+                </div>
+                <div class="hud-item">
+                    <span>阶段</span>
+                    <strong id="hudPhase">等待</strong>
+                </div>
+                <div class="hud-item">
+                    <span>当前级牌</span>
+                    <strong id="infoLevel">A</strong>
+                </div>
+                <div class="hud-item trump-hud">
+                    <span>主花色</span>
+                    <strong id="infoColor">--</strong>
+                </div>
+                <div class="hud-item">
+                    <span>闲家得分</span>
+                    <strong id="infoScore">0</strong>
+                </div>
+                <div class="hud-item">
+                    <span>轮次</span>
+                    <strong id="infoRound">1</strong>
+                </div>
+                <button class="btn ghost compact" type="button" onclick="leaveRoom()">退出</button>
+            </header>
+
+            <section class="table-felt">
+                <button id="landscapeBtn" class="landscape-btn" type="button" onclick="toggleLandscapeMode()" aria-label="切换横屏模式">
+                    <span id="landscapeBtnText">横屏</span>
+                </button>
+
+                <div class="opponent opponent-left player-panel" id="leftArea">
+                    <div class="avatar">L</div>
+                    <div>
+                        <strong id="leftName">左手</strong>
+                        <span id="leftCount">0 张</span>
+                        <span id="leftRole" class="team-role">闲家</span>
+                    </div>
+                </div>
+
+                <div class="opponent opponent-top player-panel" id="topArea">
+                    <div class="avatar">T</div>
+                    <div>
+                        <strong id="topName">上家</strong>
+                        <span id="topCount">0 张</span>
+                        <span id="topRole" class="team-role">闲家</span>
+                    </div>
+                </div>
+
+                <div class="opponent opponent-right player-panel" id="rightArea">
+                    <div class="avatar">R</div>
+                    <div>
+                        <strong id="rightName">右手</strong>
+                        <span id="rightCount">0 张</span>
+                        <span id="rightRole" class="team-role">闲家</span>
+                    </div>
+                </div>
+
+                <div class="kitty-cards" id="holeCardsArea">
+                    <span class="kitty-label">底牌区</span>
+                    <div id="holeCards" class="hole-cards"></div>
+                </div>
+
+                <div class="koupai-cards" id="koupaiCardsArea" hidden>
+                    <span class="koupai-label">已扣底牌</span>
+                    <div id="koupaiCards" class="koupai-card-list"></div>
+                </div>
+
+                <div class="center-play-area">
+                    <div id="centerMessage" class="center-message">等待开始</div>
+                    <div id="trumpHint" class="trump-hint">当前主牌待定</div>
+                    <div id="liangzhuDisplay" class="liangzhu-display"></div>
+                    <div class="played-grid">
+                        <div class="played-slot top" id="playedTop"></div>
+                        <div class="played-slot left" id="playedLeft"></div>
+                        <div class="played-slot right" id="playedRight"></div>
+                        <div class="played-slot bottom" id="playedBottom"></div>
+                    </div>
+                </div>
+
+                <section class="my-hand-area">
+                    <div class="my-info">
+                        <div>
+                            <strong id="myName">我</strong>
+                            <span id="myCount">0 张</span>
+                            <span id="myRole" class="team-role">闲家</span>
+                        </div>
+                        <span id="handPrompt" class="hand-prompt"></span>
+                        <span id="myBankerTag" class="banker-badge">庄</span>
+                    </div>
+                    <div class="my-hand" id="myHand"></div>
+                    <button id="btnNewRobotGame" class="btn warning compact reconnect-btn" type="button" onclick="startRobotRoom()" hidden>新开一局</button>
+                </section>
+            </section>
+
+            <section class="action-dock" id="actionBar">
+                <button id="btnLiangzhu" class="btn warning" type="button" onclick="showLiangzhuDialog()">亮主</button>
+                <button id="btnPassLiang" class="btn secondary" type="button" onclick="passLiangzhu()">不亮</button>
+                <button id="btnKoupai" class="btn warning" type="button" onclick="showKoupaiDialog()">扣牌</button>
+                <button id="btnHuanpaiAccept" class="btn warning" type="button" onclick="acceptHuanpai()">拾牌</button>
+                <button id="btnHuanpaiPass" class="btn secondary" type="button" onclick="passHuanpai()">不拾</button>
+                <button id="btnAutoFill" class="btn secondary" type="button" onclick="onAutoFillClick()">智能建议</button>
+                <button id="btnPlay" class="btn primary" type="button" onclick="playCards()">出牌</button>
+            </section>
+        </main>
+    </div>
+
+    <div id="resultModal" class="modal" hidden>
+        <div class="modal-content">
+            <h2 id="resultTitle">本局结束</h2>
+            <div id="resultBody"></div>
+            <div class="modal-actions">
+                <button class="btn primary" type="button" onclick="continueNextGame()">继续下一盘</button>
+                <button class="btn secondary" type="button" onclick="backToLobby()">返回大厅</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="liangzhuModal" class="modal" hidden>
+        <div class="modal-content option-modal">
+            <div class="modal-head">
+                <h2>选择亮主花色</h2>
+                <button class="link-btn" type="button" onclick="closeLiangzhuDialog()">关闭</button>
+            </div>
+            <div id="liangzhuOptions" class="option-list"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <script src="/static/js/game.js?v=__ASSET_VERSION__"></script>
+</body>
+</html>
