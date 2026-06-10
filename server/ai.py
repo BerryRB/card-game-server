@@ -1323,7 +1323,12 @@ class AI:
                     return nonscore[:2]
                 return sorted(all_color, key=lambda c: (c.has_score, c.rank))[:2]
             elif len(all_color) == 1:
-                # 只有1张同花色，补1张主牌
+                # 只有1张同花色：用其他副牌补齐，不够时用主牌
+                other_fu = [c for cs in self.player.cards_in_hand.values() for c in cs
+                           if c != all_color[0] and not c.is_zhu(self.now_level, self.now_color)]
+                if other_fu:
+                    return [all_color[0], min(other_fu, key=lambda c: (c.has_score, c.rank))]
+                # 没有其他副牌，用主牌补
                 zhu_cards = [c for c in zhudan if c not in all_color]
                 if zhu_cards:
                     return [all_color[0], zhu_cards[0]]
@@ -1353,10 +1358,10 @@ class AI:
             for other_color in sorted(fudui.keys()):
                 if other_color != color and len(fudui[other_color]) >= 2:
                     return fudui[other_color][:2]
-            # v9.10: 贴最大的分牌给队友（K/10=10分 > 5=5分）
+            # 贴最大的分牌给队友
             score_fudan = self._get_score_fudan()
             if len(score_fudan) >= 2:
-                return sorted(score_fudan, key=lambda c: -c.score)[:2]  # 贴最大的
+                return sorted(score_fudan, key=lambda c: -c.score)[:2]
             if len(score_fudan) >= 1:
                 non_score_fudan = self._get_non_score_fudan()
                 if non_score_fudan:
@@ -1365,21 +1370,20 @@ class AI:
             if len(non_score_fudan) >= 2:
                 return non_score_fudan[:2]
         else:
-            # 对手大→毙牌
-            # v9.11: 双方5分毙牌阈值
+            # 对手大→绝门时可灵活选择
+            # 场上有分>10时用主对毙牌赢分，否则优先出无分副散牌保牌力
             should_trump = False
             if self._is_last_trick() and self.score_koupai > 0:
                 should_trump = True
-            elif epoch_score >= 5:
+            elif epoch_score > 10:
                 should_trump = True
 
             if should_trump and len(zhudui) >= 2:
-                # v9.2: 副对毙牌——有分时出大主对确保赢
-                if epoch_score >= 10 and len(zhudui) >= 4:
-                    return zhudui[-2:]  # 出最大主对
-                return zhudui[:2]
+                if epoch_score >= 15 and len(zhudui) >= 4:
+                    return zhudui[-2:]  # 高分出大主对确保赢
+                return zhudui[:2]  # 出最小主对
 
-            # 不毙牌→出最小无分牌
+            # 不毙牌→优先出无分副散牌（保主牌力）
             a = self._get_analysis()
             non_score_fudan = self._get_non_score_fudan()
             if len(non_score_fudan) >= 2:
@@ -1390,7 +1394,7 @@ class AI:
                         nonscore2 = [x for x in a['fudan'][c] if not x.has_score]
                         if nonscore2:
                             return [non_score_fudan[0], nonscore2[0]]
-            # v9.10f: 没有第二个无分副牌，出主牌（不给对手送分）
+            # 没有足够无分副牌→出主牌（不给对手送分）
             if a['zhudan']:
                 return [a['zhudan'][0]]
             all_cards = []
@@ -1446,10 +1450,9 @@ class AI:
 
         # 绝门
         if my_team_winning:
-            # v9.10f: 队友大→优先贴分牌（与副单/副对一致）
+            # 队友大→优先贴分牌
             score_fudan = self._get_score_fudan()
             if len(score_fudan) >= n:
-                # 有足够分牌散牌，贴最大的n张
                 return sorted(score_fudan, key=lambda c: -c.score)[:n]
             # 贴副连对
             for other_color in sorted(fuliandui.keys()):
@@ -1463,13 +1466,12 @@ class AI:
                     pair = a['fudui'][other_color][:2]
                     if n <= 2:
                         return pair
-                    # n>2时，副对+分牌凑数
                     if score_fudan:
                         need = n - 2
                         extra = sorted(score_fudan, key=lambda c: -c.score)[:need]
                         if len(extra) == need:
                             return pair + extra
-            # 贴分牌散牌（不够n张则用无分牌凑）
+            # 贴分牌散牌
             if score_fudan:
                 result = sorted(score_fudan, key=lambda c: -c.score)[:n]
                 if len(result) < n:
@@ -1478,14 +1480,38 @@ class AI:
                 if len(result) == n:
                     return result
         else:
-            # v9: ≥5分就毙（与单牌一致）
-            epoch_score = self._count_epoch_score(epoch_cards)
-            if not is_banker or epoch_score >= 5:
-                for chain in zhuliandui:
-                    if len(chain) >= n:
-                        return chain[:n]
-            if len(self._get_analysis()['zhudui']) >= 2:
-                return self._get_analysis()['zhudui'][:2]
+            # 对手大→绝门时不主动用主连对毙牌（保牌力），优先出无分副散牌
+            # 只有没其他牌可出时才拆主连对
+            non_score_fudan = self._get_non_score_fudan()
+            if len(non_score_fudan) >= n:
+                return non_score_fudan[:n]
+
+            # 用副对凑
+            for other_color in sorted(a.get('fudui', {}).keys() if 'a' in dir() else []):
+                pass  # a可能未定义，下面重新获取
+            a2 = self._get_analysis()
+            for other_color in sorted(a2['fudui'].keys()):
+                if len(a2['fudui'][other_color]) >= 2:
+                    pair = a2['fudui'][other_color][:2]
+                    if n <= 2:
+                        return pair
+                    need = n - 2
+                    extra = non_score_fudan[:need]
+                    if len(extra) == need:
+                        return pair + extra
+
+            # 副散牌不够凑齐→拆主连对（必须出牌）
+            all_cards = []
+            for cards in self.player.cards_in_hand.values():
+                all_cards.extend(cards)
+            fu_all = [c for c in all_cards if not c.is_zhu(self.now_level, self.now_color)]
+            if len(fu_all) >= n:
+                sorted_fu = sorted(fu_all, key=lambda c: (c.has_score, c.rank))
+                return sorted_fu[:n]
+            # 副牌不够，拆主连对凑齐
+            zhu_all = [c for c in all_cards if c.is_zhu(self.now_level, self.now_color)]
+            combined = sorted(fu_all, key=lambda c: (c.has_score, c.rank)) + sorted(zhu_all, key=lambda c: c.rank)
+            return combined[:min(n, len(combined))]
 
         return []
 
@@ -1528,6 +1554,12 @@ class AI:
                 # 只剩分主牌没办法
                 return [zhudan[0]]
 
+        # 无主牌时出最小副牌
+        all_cards = []
+        for cards in self.player.cards_in_hand.values():
+            all_cards.extend(cards)
+        if all_cards:
+            return [min(all_cards, key=lambda c: c.rank)]
         return []
 
     def _follow_zhudui(self, first_cards, epoch_cards, epoch_players,
@@ -1620,4 +1652,24 @@ class AI:
                 if len(chain) >= n:
                     return chain[:n]
 
+        # 无足够长主连对：用主对/主散牌凑齐
+        all_cards = []
+        for cards in self.player.cards_in_hand.values():
+            all_cards.extend(cards)
+        zhu_cards = sorted([c for c in all_cards if c.is_zhu(self.now_level, self.now_color)],
+                          key=lambda c: (get_zhu_rank(c, self.now_level, self.now_color), c.rank),
+                          reverse=True)
+        fu_cards = sorted([c for c in all_cards if not c.is_zhu(self.now_level, self.now_color)],
+                         key=lambda c: c.rank)
+
+        # 有主牌时必须出所有主牌，不够n张用副牌补齐
+        if zhu_cards:
+            result = zhu_cards[:min(len(zhu_cards), n)]
+            if len(result) < n:
+                # 主牌不够，副牌补齐
+                result += fu_cards[:n - len(result)]
+            return result[:n]
+        # 完全无主牌(0张)：用副牌凑
+        if fu_cards:
+            return fu_cards[:n]
         return []

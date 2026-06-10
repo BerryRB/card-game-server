@@ -398,33 +398,64 @@ def compare_outcards(cards1: list[Card], cards2: list[Card],
     type2 = determine_play_type(cards2, now_level, now_color)
 
     def type_priority(play_type):
+        """牌型优先级：先比牌型大类，再比具体参数
+        
+        牌型大类（从高到低）：
+        1. 连对(lian) → 优先级最高
+        2. 多对(duiN, 非连对的全对子) → 次高
+        3. 单对(dui, zhudui/fudui) → 第三
+        4. 对+散牌(duiN_san) → 第四
+        5. 单张(dan) → 基础
+        6. 全散牌(san) → 最低
+        
+        同大类内：连对数多的>少的，对子数多的>少的
+        不同大类绝对不可互赢（如副对不可被主散牌赢）
+        """
         if play_type is None:
             return (0, 0)
+        # 单张
         if play_type in ("zhudan", "fudan"):
             return (1, 1)
+        # 全散牌（2张+不成对）
         if play_type in ("zhusan", "fusan"):
             return (1, 0)
+        # 多张散牌（fusan3/fusan4等）
+        if play_type.startswith("fusan") or play_type.startswith("zhusan"):
+            try:
+                n = int(play_type.replace("fusan", "").replace("zhusan", ""))
+            except ValueError:
+                n = 2
+            return (1, 0)  # 散牌统一最低层级
+        # 单对
         if play_type in ("zhudui", "fudui"):
-            return (2, 1)
+            return (10, 1)
+        # 连对
         if play_type.startswith("fulian") or play_type.startswith("zhulian"):
             try:
                 pair_count = int(play_type.replace("fulian", "").replace("zhulian", ""))
             except ValueError:
                 pair_count = 2
             return (100 + pair_count, 0)
-        if "_san" in play_type:
-            base = play_type.split("dui")[1].split("_san")[0]
-            return (10 + int(base), 1)
-        if "dui" in play_type:
+        # 多对(非连对，如fudui2/zhudui2)
+        if "dui" in play_type and "_san" not in play_type:
             base = play_type.split("dui")[1]
             if base.isdigit():
-                return (20 + int(base), 0)
-        if "san" in play_type:
-            return (5, 0)
+                return (50 + int(base), 0)
+        # 对+散牌
+        if "_san" in play_type:
+            base = play_type.split("dui")[1].split("_san")[0]
+            return (5 + int(base), 0)
         return (0, 0)
 
     pri1 = type_priority(type1)
     pri2 = type_priority(type2)
+
+    # 牌型不同时，只有牌型高的大（散牌不可赢对子）
+    # 但首出的牌必须和跟出的牌张数相同（len已检查）
+    # 牌型优先级不同时：大牌型赢
+    if pri1[0] != pri2[0]:
+        return pri1[0] > pri2[0]
+    # 同一大类内比较具体参数
     if pri1 != pri2:
         return pri1 > pri2
 

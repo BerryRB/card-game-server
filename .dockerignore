@@ -1,0 +1,32 @@
+# 版本控制
+.git
+.gitignore
+
+# Python缓存
+__pycache__
+*.py[cod]
+*.pyo
+*.pyc
+.pytest_cache
+*.egg-info
+.venv
+
+# 模型文件（通过挂载或构建时显式COPY）
+# 若要在构建时包含模型，注释掉下面这行
+rl_dmc/models_v9/*.pt
+
+# 测试产物
+e2e_test_results.json
+web_e2e_results.json
+
+# 编辑器/IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# 环境文件
+.env
+
+# 文档
+README_DEPLOY.md

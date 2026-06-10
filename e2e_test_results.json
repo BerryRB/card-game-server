@@ -1,0 +1,2719 @@
+{
+  "summary": {
+    "total": 50,
+    "completed": 50,
+    "stuck": 0,
+    "errors": 0,
+    "banker_wins": 17,
+    "xianjia_wins": 33,
+    "avg_score": 96.8,
+    "dmc_stats": {
+      "dmc_calls": 4620,
+      "dmc_success": 4620,
+      "fallback_calls": 0
+    }
+  },
+  "games": [
+    {
+      "game_id": 0,
+      "winner": "xianjia",
+      "score_now": 125,
+      "result_type": "duozhuang1",
+      "levels": 1,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 88,
+      "stuck": false,
+      "duration_sec": 0.29,
+      "play_stats": {
+        "2": {
+          "single": 15,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "3": {
+          "single": 15,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "0": {
+          "single": 15,
+          "pair": 5,
+          "triple": 1,
+          "sequence": 0,
+          "total": 21
+        },
+        "1": {
+          "single": 13,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 20
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 84,
+        "dmc_success": 84,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 1,
+      "winner": "xianjia",
+      "score_now": 150,
+      "result_type": "duozhuang1",
+      "levels": 1,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 96,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "1": {
+          "single": 17,
+          "pair": 5,
+          "triple": 1,
+          "sequence": 0,
+          "total": 23
+        },
+        "2": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "3": {
+          "single": 20,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "0": {
+          "single": 16,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 176,
+        "dmc_success": 176,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 2,
+      "winner": "xianjia",
+      "score_now": 170,
+      "result_type": "duozhuang2",
+      "levels": 2,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        3,
+        3
+      ],
+      "next_level": "3",
+      "steps": 95,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "1": {
+          "single": 18,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "2": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "3": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "0": {
+          "single": 16,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 268,
+        "dmc_success": 268,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 3,
+      "winner": "banker",
+      "score_now": 55,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        2,
+        0
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 99,
+      "stuck": false,
+      "duration_sec": 0.19,
+      "play_stats": {
+        "1": {
+          "single": 18,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 21,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 20,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 364,
+        "dmc_success": 364,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 4,
+      "winner": "xianjia",
+      "score_now": 105,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 88,
+      "stuck": false,
+      "duration_sec": 0.16,
+      "play_stats": {
+        "1": {
+          "single": 14,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "2": {
+          "single": 14,
+          "pair": 5,
+          "triple": 2,
+          "sequence": 0,
+          "total": 21
+        },
+        "3": {
+          "single": 16,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "0": {
+          "single": 11,
+          "pair": 9,
+          "triple": 0,
+          "sequence": 0,
+          "total": 20
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 448,
+        "dmc_success": 448,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 5,
+      "winner": "banker",
+      "score_now": 70,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        2,
+        0
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 100,
+      "stuck": false,
+      "duration_sec": 0.19,
+      "play_stats": {
+        "3": {
+          "single": 18,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 19,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "1": {
+          "single": 22,
+          "pair": 2,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 18,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 544,
+        "dmc_success": 544,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 6,
+      "winner": "xianjia",
+      "score_now": 165,
+      "result_type": "duozhuang2",
+      "levels": 2,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        3,
+        3
+      ],
+      "next_level": "3",
+      "steps": 92,
+      "stuck": false,
+      "duration_sec": 0.17,
+      "play_stats": {
+        "2": {
+          "single": 15,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "3": {
+          "single": 14,
+          "pair": 8,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "0": {
+          "single": 19,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "1": {
+          "single": 14,
+          "pair": 6,
+          "triple": 1,
+          "sequence": 0,
+          "total": 21
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 632,
+        "dmc_success": 632,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 7,
+      "winner": "banker",
+      "score_now": 35,
+      "result_type": "xiaoguang",
+      "levels": 2,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        3,
+        3
+      ],
+      "next_level": "3",
+      "steps": 100,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "1": {
+          "single": 19,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 21,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 18,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 728,
+        "dmc_success": 728,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 8,
+      "winner": "xianjia",
+      "score_now": 175,
+      "result_type": "duozhuang2",
+      "levels": 2,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        3,
+        3
+      ],
+      "next_level": "3",
+      "steps": 100,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "0": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "1": {
+          "single": 21,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 19,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 824,
+        "dmc_success": 824,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 9,
+      "winner": "xianjia",
+      "score_now": 130,
+      "result_type": "duozhuang1",
+      "levels": 1,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 96,
+      "stuck": false,
+      "duration_sec": 0.17,
+      "play_stats": {
+        "3": {
+          "single": 17,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "0": {
+          "single": 17,
+          "pair": 5,
+          "triple": 1,
+          "sequence": 0,
+          "total": 23
+        },
+        "1": {
+          "single": 18,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "2": {
+          "single": 17,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 916,
+        "dmc_success": 916,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 10,
+      "winner": "banker",
+      "score_now": 75,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        2,
+        0
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 100,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "1": {
+          "single": 21,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 22,
+          "pair": 2,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 18,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 1012,
+        "dmc_success": 1012,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 11,
+      "winner": "banker",
+      "score_now": 75,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 91,
+      "stuck": false,
+      "duration_sec": 0.17,
+      "play_stats": {
+        "3": {
+          "single": 16,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "0": {
+          "single": 13,
+          "pair": 9,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "1": {
+          "single": 18,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "2": {
+          "single": 16,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 1100,
+        "dmc_success": 1100,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 12,
+      "winner": "xianjia",
+      "score_now": 135,
+      "result_type": "duozhuang1",
+      "levels": 1,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 100,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "1": {
+          "single": 18,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 18,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 17,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 1196,
+        "dmc_success": 1196,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 13,
+      "winner": "xianjia",
+      "score_now": 90,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 96,
+      "stuck": false,
+      "duration_sec": 0.17,
+      "play_stats": {
+        "3": {
+          "single": 17,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "0": {
+          "single": 17,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "1": {
+          "single": 17,
+          "pair": 5,
+          "triple": 1,
+          "sequence": 0,
+          "total": 23
+        },
+        "2": {
+          "single": 17,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 1288,
+        "dmc_success": 1288,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 14,
+      "winner": "xianjia",
+      "score_now": 125,
+      "result_type": "duozhuang1",
+      "levels": 1,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 88,
+      "stuck": false,
+      "duration_sec": 0.15,
+      "play_stats": {
+        "0": {
+          "single": 14,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "1": {
+          "single": 15,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "2": {
+          "single": 11,
+          "pair": 10,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "3": {
+          "single": 11,
+          "pair": 9,
+          "triple": 0,
+          "sequence": 0,
+          "total": 20
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 1372,
+        "dmc_success": 1372,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 15,
+      "winner": "xianjia",
+      "score_now": 125,
+      "result_type": "duozhuang1",
+      "levels": 1,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 100,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "3": {
+          "single": 21,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 19,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "1": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 18,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 1468,
+        "dmc_success": 1468,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 16,
+      "winner": "banker",
+      "score_now": 20,
+      "result_type": "xiaoguang",
+      "levels": 2,
+      "new_bankers": [
+        3,
+        1
+      ],
+      "banker_levels": [
+        3,
+        3
+      ],
+      "next_level": "3",
+      "steps": 103,
+      "stuck": false,
+      "duration_sec": 0.19,
+      "play_stats": {
+        "2": {
+          "single": 21,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 25
+        },
+        "3": {
+          "single": 20,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 25
+        },
+        "0": {
+          "single": 21,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 25
+        },
+        "1": {
+          "single": 19,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 1568,
+        "dmc_success": 1568,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 17,
+      "winner": "xianjia",
+      "score_now": 120,
+      "result_type": "duozhuang1",
+      "levels": 1,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 99,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "2": {
+          "single": 19,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 18,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 19,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "1": {
+          "single": 20,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 1664,
+        "dmc_success": 1664,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 18,
+      "winner": "banker",
+      "score_now": 70,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        2,
+        0
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 95,
+      "stuck": false,
+      "duration_sec": 0.17,
+      "play_stats": {
+        "1": {
+          "single": 15,
+          "pair": 8,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "2": {
+          "single": 16,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "3": {
+          "single": 20,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "0": {
+          "single": 17,
+          "pair": 4,
+          "triple": 1,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 1756,
+        "dmc_success": 1756,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 19,
+      "winner": "banker",
+      "score_now": 50,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        2,
+        0
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 100,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "3": {
+          "single": 17,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 21,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "1": {
+          "single": 19,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 1852,
+        "dmc_success": 1852,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 20,
+      "winner": "xianjia",
+      "score_now": 85,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 92,
+      "stuck": false,
+      "duration_sec": 0.16,
+      "play_stats": {
+        "0": {
+          "single": 18,
+          "pair": 3,
+          "triple": 1,
+          "sequence": 0,
+          "total": 22
+        },
+        "1": {
+          "single": 12,
+          "pair": 10,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "2": {
+          "single": 16,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "3": {
+          "single": 14,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 1940,
+        "dmc_success": 1940,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 21,
+      "winner": "banker",
+      "score_now": 55,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        2,
+        0
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 100,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "1": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 18,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 21,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 18,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 2036,
+        "dmc_success": 2036,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 22,
+      "winner": "banker",
+      "score_now": 70,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        3,
+        1
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 99,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "2": {
+          "single": 21,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 18,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "1": {
+          "single": 18,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 2132,
+        "dmc_success": 2132,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 23,
+      "winner": "banker",
+      "score_now": 65,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        2,
+        0
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 99,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "1": {
+          "single": 18,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 22,
+          "pair": 2,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 20,
+          "pair": 2,
+          "triple": 1,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 2228,
+        "dmc_success": 2228,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 24,
+      "winner": "banker",
+      "score_now": 50,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        3,
+        1
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 87,
+      "stuck": false,
+      "duration_sec": 0.17,
+      "play_stats": {
+        "2": {
+          "single": 17,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "3": {
+          "single": 14,
+          "pair": 6,
+          "triple": 1,
+          "sequence": 0,
+          "total": 21
+        },
+        "0": {
+          "single": 14,
+          "pair": 6,
+          "triple": 1,
+          "sequence": 0,
+          "total": 21
+        },
+        "1": {
+          "single": 13,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 20
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 2312,
+        "dmc_success": 2312,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 25,
+      "winner": "xianjia",
+      "score_now": 125,
+      "result_type": "duozhuang1",
+      "levels": 1,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 103,
+      "stuck": false,
+      "duration_sec": 0.19,
+      "play_stats": {
+        "2": {
+          "single": 18,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 25
+        },
+        "3": {
+          "single": 21,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 25
+        },
+        "0": {
+          "single": 20,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 25
+        },
+        "1": {
+          "single": 21,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 2412,
+        "dmc_success": 2412,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 26,
+      "winner": "banker",
+      "score_now": 70,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 96,
+      "stuck": false,
+      "duration_sec": 0.17,
+      "play_stats": {
+        "1": {
+          "single": 18,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "2": {
+          "single": 16,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "3": {
+          "single": 16,
+          "pair": 6,
+          "triple": 1,
+          "sequence": 0,
+          "total": 23
+        },
+        "0": {
+          "single": 16,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 2504,
+        "dmc_success": 2504,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 27,
+      "winner": "xianjia",
+      "score_now": 95,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 96,
+      "stuck": false,
+      "duration_sec": 0.17,
+      "play_stats": {
+        "1": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "2": {
+          "single": 17,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "3": {
+          "single": 15,
+          "pair": 7,
+          "triple": 1,
+          "sequence": 0,
+          "total": 23
+        },
+        "0": {
+          "single": 19,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 2596,
+        "dmc_success": 2596,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 28,
+      "winner": "xianjia",
+      "score_now": 155,
+      "result_type": "duozhuang1",
+      "levels": 1,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 92,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "1": {
+          "single": 19,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "2": {
+          "single": 16,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "3": {
+          "single": 16,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "0": {
+          "single": 14,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 2684,
+        "dmc_success": 2684,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 29,
+      "winner": "xianjia",
+      "score_now": 85,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 99,
+      "stuck": false,
+      "duration_sec": 0.19,
+      "play_stats": {
+        "3": {
+          "single": 16,
+          "pair": 8,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 21,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "1": {
+          "single": 18,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 17,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 2780,
+        "dmc_success": 2780,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 30,
+      "winner": "xianjia",
+      "score_now": 155,
+      "result_type": "duozhuang1",
+      "levels": 1,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 88,
+      "stuck": false,
+      "duration_sec": 0.16,
+      "play_stats": {
+        "3": {
+          "single": 16,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "0": {
+          "single": 13,
+          "pair": 8,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "1": {
+          "single": 17,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "2": {
+          "single": 12,
+          "pair": 8,
+          "triple": 0,
+          "sequence": 0,
+          "total": 20
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 2864,
+        "dmc_success": 2864,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 31,
+      "winner": "xianjia",
+      "score_now": 95,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 96,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "0": {
+          "single": 21,
+          "pair": 2,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "1": {
+          "single": 16,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "2": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "3": {
+          "single": 18,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 2956,
+        "dmc_success": 2956,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 32,
+      "winner": "xianjia",
+      "score_now": 175,
+      "result_type": "duozhuang2",
+      "levels": 2,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        3,
+        3
+      ],
+      "next_level": "3",
+      "steps": 96,
+      "stuck": false,
+      "duration_sec": 0.17,
+      "play_stats": {
+        "0": {
+          "single": 20,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "1": {
+          "single": 18,
+          "pair": 4,
+          "triple": 1,
+          "sequence": 0,
+          "total": 23
+        },
+        "2": {
+          "single": 17,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "3": {
+          "single": 17,
+          "pair": 4,
+          "triple": 1,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 3048,
+        "dmc_success": 3048,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 33,
+      "winner": "xianjia",
+      "score_now": 85,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 88,
+      "stuck": false,
+      "duration_sec": 0.16,
+      "play_stats": {
+        "2": {
+          "single": 15,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "3": {
+          "single": 12,
+          "pair": 9,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "0": {
+          "single": 16,
+          "pair": 4,
+          "triple": 1,
+          "sequence": 0,
+          "total": 21
+        },
+        "1": {
+          "single": 14,
+          "pair": 4,
+          "triple": 2,
+          "sequence": 0,
+          "total": 20
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 3132,
+        "dmc_success": 3132,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 34,
+      "winner": "xianjia",
+      "score_now": 120,
+      "result_type": "duozhuang1",
+      "levels": 1,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 100,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "2": {
+          "single": 18,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "0": {
+          "single": 21,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "1": {
+          "single": 17,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 3228,
+        "dmc_success": 3228,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 35,
+      "winner": "xianjia",
+      "score_now": 80,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 91,
+      "stuck": false,
+      "duration_sec": 0.16,
+      "play_stats": {
+        "2": {
+          "single": 18,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "3": {
+          "single": 14,
+          "pair": 6,
+          "triple": 2,
+          "sequence": 0,
+          "total": 22
+        },
+        "0": {
+          "single": 15,
+          "pair": 6,
+          "triple": 1,
+          "sequence": 0,
+          "total": 22
+        },
+        "1": {
+          "single": 15,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 3316,
+        "dmc_success": 3316,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 36,
+      "winner": "banker",
+      "score_now": 45,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 95,
+      "stuck": false,
+      "duration_sec": 0.17,
+      "play_stats": {
+        "0": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "1": {
+          "single": 15,
+          "pair": 8,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "2": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "3": {
+          "single": 17,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 3408,
+        "dmc_success": 3408,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 37,
+      "winner": "xianjia",
+      "score_now": 90,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 95,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "3": {
+          "single": 18,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "0": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "1": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "2": {
+          "single": 18,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 3500,
+        "dmc_success": 3500,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 38,
+      "winner": "xianjia",
+      "score_now": 135,
+      "result_type": "duozhuang1",
+      "levels": 1,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 87,
+      "stuck": false,
+      "duration_sec": 0.15,
+      "play_stats": {
+        "1": {
+          "single": 15,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "2": {
+          "single": 14,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "3": {
+          "single": 17,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "0": {
+          "single": 14,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 20
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 3584,
+        "dmc_success": 3584,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 39,
+      "winner": "xianjia",
+      "score_now": 90,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 92,
+      "stuck": false,
+      "duration_sec": 0.16,
+      "play_stats": {
+        "2": {
+          "single": 16,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "3": {
+          "single": 17,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "0": {
+          "single": 16,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "1": {
+          "single": 14,
+          "pair": 5,
+          "triple": 2,
+          "sequence": 0,
+          "total": 21
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 3672,
+        "dmc_success": 3672,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 40,
+      "winner": "xianjia",
+      "score_now": 85,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 96,
+      "stuck": false,
+      "duration_sec": 0.17,
+      "play_stats": {
+        "0": {
+          "single": 21,
+          "pair": 2,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "1": {
+          "single": 17,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "2": {
+          "single": 14,
+          "pair": 9,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "3": {
+          "single": 18,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 3764,
+        "dmc_success": 3764,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 41,
+      "winner": "xianjia",
+      "score_now": 95,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 104,
+      "stuck": false,
+      "duration_sec": 0.19,
+      "play_stats": {
+        "2": {
+          "single": 23,
+          "pair": 1,
+          "triple": 1,
+          "sequence": 0,
+          "total": 25
+        },
+        "3": {
+          "single": 20,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 25
+        },
+        "0": {
+          "single": 20,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 25
+        },
+        "1": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 3864,
+        "dmc_success": 3864,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 42,
+      "winner": "xianjia",
+      "score_now": 105,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 91,
+      "stuck": false,
+      "duration_sec": 0.17,
+      "play_stats": {
+        "0": {
+          "single": 19,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "1": {
+          "single": 15,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "2": {
+          "single": 17,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        },
+        "3": {
+          "single": 17,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 3952,
+        "dmc_success": 3952,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 43,
+      "winner": "xianjia",
+      "score_now": 115,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 88,
+      "stuck": false,
+      "duration_sec": 0.16,
+      "play_stats": {
+        "3": {
+          "single": 16,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "0": {
+          "single": 12,
+          "pair": 9,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "1": {
+          "single": 14,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 21
+        },
+        "2": {
+          "single": 15,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 20
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 4036,
+        "dmc_success": 4036,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 44,
+      "winner": "banker",
+      "score_now": 55,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 99,
+      "stuck": false,
+      "duration_sec": 0.19,
+      "play_stats": {
+        "0": {
+          "single": 20,
+          "pair": 3,
+          "triple": 1,
+          "sequence": 0,
+          "total": 24
+        },
+        "1": {
+          "single": 19,
+          "pair": 4,
+          "triple": 1,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 19,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 20,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 4132,
+        "dmc_success": 4132,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 45,
+      "winner": "xianjia",
+      "score_now": 95,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 108,
+      "stuck": false,
+      "duration_sec": 0.2,
+      "play_stats": {
+        "3": {
+          "single": 23,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 26
+        },
+        "0": {
+          "single": 24,
+          "pair": 2,
+          "triple": 0,
+          "sequence": 0,
+          "total": 26
+        },
+        "1": {
+          "single": 22,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 26
+        },
+        "2": {
+          "single": 24,
+          "pair": 1,
+          "triple": 0,
+          "sequence": 0,
+          "total": 25
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 4236,
+        "dmc_success": 4236,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 46,
+      "winner": "xianjia",
+      "score_now": 80,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 100,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "0": {
+          "single": 21,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "1": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 19,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 18,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 4332,
+        "dmc_success": 4332,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 47,
+      "winner": "banker",
+      "score_now": 75,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        1,
+        3
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 100,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "0": {
+          "single": 19,
+          "pair": 5,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "1": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "2": {
+          "single": 20,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 24
+        },
+        "3": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 4428,
+        "dmc_success": 4428,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 48,
+      "winner": "xianjia",
+      "score_now": 85,
+      "result_type": "duozhuang0",
+      "levels": 0,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        1,
+        1
+      ],
+      "next_level": "A",
+      "steps": 96,
+      "stuck": false,
+      "duration_sec": 0.18,
+      "play_stats": {
+        "2": {
+          "single": 17,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "3": {
+          "single": 16,
+          "pair": 7,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "0": {
+          "single": 19,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 23
+        },
+        "1": {
+          "single": 16,
+          "pair": 6,
+          "triple": 0,
+          "sequence": 0,
+          "total": 22
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 4520,
+        "dmc_success": 4520,
+        "fallback_calls": 0
+      }
+    },
+    {
+      "game_id": 49,
+      "winner": "banker",
+      "score_now": 60,
+      "result_type": "sheng1",
+      "levels": 1,
+      "new_bankers": [
+        0,
+        2
+      ],
+      "banker_levels": [
+        2,
+        2
+      ],
+      "next_level": "2",
+      "steps": 104,
+      "stuck": false,
+      "duration_sec": 0.19,
+      "play_stats": {
+        "3": {
+          "single": 21,
+          "pair": 4,
+          "triple": 0,
+          "sequence": 0,
+          "total": 25
+        },
+        "0": {
+          "single": 23,
+          "pair": 2,
+          "triple": 0,
+          "sequence": 0,
+          "total": 25
+        },
+        "1": {
+          "single": 22,
+          "pair": 3,
+          "triple": 0,
+          "sequence": 0,
+          "total": 25
+        },
+        "2": {
+          "single": 22,
+          "pair": 1,
+          "triple": 1,
+          "sequence": 0,
+          "total": 24
+        }
+      },
+      "dmc_stats": {
+        "dmc_calls": 4620,
+        "dmc_success": 4620,
+        "fallback_calls": 0
+      }
+    }
+  ],
+  "errors_detail": []
+}
