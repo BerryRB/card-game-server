@@ -127,6 +127,9 @@ class ShengjiGame:
         # 自动完成到出牌阶段
         self._auto_play_to_playing()
         
+        # 记录初始庄家（room.bankers会在夺庄后改变）
+        self._initial_bankers = list(self.room.bankers) if self.room.bankers else [0, 2]
+        
         self.step_count = 0
         self.game_over = False
         self.payoffs = None
@@ -539,7 +542,9 @@ class ShengjiGame:
         played_rep = np.zeros(NUM_CARDS, dtype=np.float32)
         used_played = set()
         for trick in getattr(self.room, 'epoch_history', []):
-            for cards in trick:
+            # epoch_history每个元素是dict{'cards':..., 'players':..., 'winner':...}
+            trick_cards = trick['cards'] if isinstance(trick, dict) else trick
+            for cards in trick_cards:
                 ids = cards_to_ids(cards, used_played.copy())
                 for cid in ids:
                     played_rep[cid] = 1.0
@@ -592,9 +597,9 @@ class ShengjiGame:
         else:
             bp, dp = 0.5, -0.5
         payoffs = np.zeros(4)
-        banker_team = 0
-        if self.room.bankers:
-            banker_team = self.room.bankers[0] % 2
+        # 用_initial_bankers（在游戏开始时记录）避免夺庄后bankers改变
+        bankers = getattr(self, '_initial_bankers', None) or self.room.bankers or [0, 2]
+        banker_team = bankers[0] % 2
         for i in range(4):
             if (i % 2) == banker_team:
                 payoffs[i] = bp

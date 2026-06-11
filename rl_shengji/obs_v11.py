@@ -136,7 +136,8 @@ def encode_obs_v11(game, player_id):
     played_trump = np.zeros(1, dtype=np.float32)
     
     for trick in epoch_history:
-        for card_list in trick:
+        trick_cards = trick['cards'] if isinstance(trick, dict) else trick
+        for card_list in trick_cards:
             for card in card_list:
                 if hasattr(card, 'name'):
                     if card.name == '5':

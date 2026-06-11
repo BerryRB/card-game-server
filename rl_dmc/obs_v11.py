@@ -52,8 +52,14 @@ OBS_DIM_V11 = 764  # 693 base + 71 v11 extra
 TOTAL_SCORE = 200  # 4花色 × (5+10+K)×2副 = 4×25×2
 
 
-def encode_obs_v11(game, player_id):
+def encode_obs_v11(game, player_id, initial_bankers=None):
     """v11观测编码：693维base + 71维精确增强
+    
+    Args:
+        game: ShengjiGame实例
+        player_id: 玩家ID
+        initial_bankers: 本局初始庄家列表。必须传入以避免夺庄后room.bankers改变
+            导致的观测不一致。如未传入则fallback到room.bankers。
     
     绝门推断规则（用户5/22纠正后）：
     - 确认绝门：首出某花色时，该玩家跟牌未出同花色(出了主牌或其他花色)，且手牌>0
@@ -65,7 +71,7 @@ def encode_obs_v11(game, player_id):
       - 如果后续观察到该玩家出了该花色，推测清零
     """
     room = game.room
-    bankers = room.bankers or [0, 2]
+    bankers = initial_bankers if initial_bankers is not None else (room.bankers or [0, 2])
     now_color = room.now_color
     now_level = room.now_level
     player = room.players[player_id]
@@ -136,7 +142,8 @@ def encode_obs_v11(game, player_id):
     played_trump = np.zeros(1, dtype=np.float32)
     
     for trick in epoch_history:
-        for card_list in trick:
+        trick_cards = trick['cards'] if isinstance(trick, dict) else trick
+        for card_list in trick_cards:
             for card in card_list:
                 if hasattr(card, 'name'):
                     if card.name == '5':
