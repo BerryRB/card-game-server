@@ -346,14 +346,9 @@ def determine_play_type(cards: list[Card], now_level: str,
         return 'zhudan' if all_zhu else 'fudan'
 
     if n == 2:
-        if all_zhu:
-            # 主对：同name即可（不要求同花色）
-            if cards[0].name == cards[1].name:
-                return 'zhudui'
-        else:
-            # 副对：必须同name同花色
-            if cards[0].name == cards[1].name and cards[0].color == cards[1].color:
-                return 'fudui'
+        # 对子：必须同name同花色（无论主牌副牌）
+        if cards[0].name == cards[1].name and cards[0].color == cards[1].color:
+            return 'zhudui' if all_zhu else 'fudui'
         # 2张牌但不是对子 → 散牌组合
         return 'zhusan' if all_zhu else 'fusan'
 

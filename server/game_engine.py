@@ -836,25 +836,25 @@ class GameRoom:
             for c in all_cards:
                 options.append({'cards': [c.card_type], 'label': '单牌'})
 
-            # 对子（副对要求同花色同name，主对只要求同name）
+            # 对子（主对和副对都要求同name同花色）
             rank_groups = {}
             for c in all_cards:
-                if c.name not in rank_groups:
-                    rank_groups[c.name] = []
-                rank_groups[c.name].append(c)
+                key = (c.name, c.color)
+                if key not in rank_groups:
+                    rank_groups[key] = []
+                rank_groups[key].append(c)
 
-            for name, cards in rank_groups.items():
+            for (name, color), cards in rank_groups.items():
                 if len(cards) >= 2:
-                    # 判断是否为主对（同name的两张主牌）
-                    is_zhu_pair = (len(cards) >= 2
-                                  and cards[0].is_zhu(self.now_level, self.now_color)
+                    # 判断是否为主对（同name同花色的两张主牌）
+                    is_zhu_pair = (cards[0].is_zhu(self.now_level, self.now_color)
                                   and cards[1].is_zhu(self.now_level, self.now_color))
                     if is_zhu_pair:
-                        # 主对：同name即可，不要求同花色
+                        # 主对：同name同花色的两张主牌
                         options.append({'cards': [cards[0].card_type, cards[1].card_type],
                                         'label': '主对'})
-                    elif cards[0].color == cards[1].color:
-                        # 副对：必须同花色同name
+                    else:
+                        # 副对：同name同花色的两张副牌
                         options.append({'cards': [cards[0].card_type, cards[1].card_type],
                                         'label': '对子'})
 
@@ -911,14 +911,15 @@ class GameRoom:
                     zhu_cards = [c for c in all_cards if c.is_zhu(self.now_level, self.now_color)]
                     zhu_rank_count = {}
                     for c in zhu_cards:
-                        if c.name not in zhu_rank_count:
-                            zhu_rank_count[c.name] = []
-                        zhu_rank_count[c.name].append(c)
+                        key = (c.name, c.color)
+                        if key not in zhu_rank_count:
+                            zhu_rank_count[key] = []
+                        zhu_rank_count[key].append(c)
                     zhu_has_pair = any(len(v) >= 2 for v in zhu_rank_count.values())
 
                     # 选项1: 主对（毙牌选项）
                     if zhu_has_pair:
-                        for name, cards in zhu_rank_count.items():
+                        for (name, color), cards in zhu_rank_count.items():
                             while len(cards) >= 2:
                                 options.append({'cards': [cards[0].card_type, cards[1].card_type],
                                                 'label': '绝门主对'})
@@ -927,10 +928,11 @@ class GameRoom:
                     fu_cards = [c for c in all_cards if not c.is_zhu(self.now_level, self.now_color)]
                     fu_rank_count = {}
                     for c in fu_cards:
-                        if c.name not in fu_rank_count:
-                            fu_rank_count[c.name] = []
-                        fu_rank_count[c.name].append(c)
-                    for name, cards in fu_rank_count.items():
+                        key = (c.name, c.color)
+                        if key not in fu_rank_count:
+                            fu_rank_count[key] = []
+                        fu_rank_count[key].append(c)
+                    for (name, color), cards in fu_rank_count.items():
                         if len(cards) >= 2:
                             options.append({'cards': [cards[0].card_type, cards[1].card_type],
                                             'label': '绝门副对'})
@@ -1043,26 +1045,28 @@ class GameRoom:
                     # 选项1: 副对（优先出同花色副对，其他花色副对也行）
                     fu_rank_groups = {}
                     for c in fu_cards:
-                        if c.name not in fu_rank_groups:
-                            fu_rank_groups[c.name] = []
-                        fu_rank_groups[c.name].append(c)
-                    for name, cards in fu_rank_groups.items():
-                        if len(cards) >= 2 and cards[0].color == first_color:
+                        key = (c.name, c.color)
+                        if key not in fu_rank_groups:
+                            fu_rank_groups[key] = []
+                        fu_rank_groups[key].append(c)
+                    for (name, color), cards in fu_rank_groups.items():
+                        if len(cards) >= 2 and color == first_color:
                             options.append({'cards': [cards[0].card_type, cards[1].card_type],
                                             'label': '绝门同花色副对'})
 
                     # 选项2: 其他花色副对
-                    for name, cards in fu_rank_groups.items():
-                        if len(cards) >= 2 and cards[0].color != first_color:
+                    for (name, color), cards in fu_rank_groups.items():
+                        if len(cards) >= 2 and color != first_color:
                             options.append({'cards': [cards[0].card_type, cards[1].card_type],
                                             'label': '绝门副对'})
 
                     # 选项3: 主连对（毙牌选项）
                     zhu_rank_groups = {}
                     for c in zhu_cards:
-                        if c.name not in zhu_rank_groups:
-                            zhu_rank_groups[c.name] = []
-                        zhu_rank_groups[c.name].append(c)
+                        key = (c.name, c.color)
+                        if key not in zhu_rank_groups:
+                            zhu_rank_groups[key] = []
+                        zhu_rank_groups[key].append(c)
                     available_zhu_ranks = sorted(set(
                         r for r, cs in zhu_rank_groups.items() if len(cs) >= 2))
                     chain_len = n // 2
@@ -1083,7 +1087,7 @@ class GameRoom:
                     # 选项4: 主对（毙牌选项）
                     zhu_has_pair = any(len(v) >= 2 for v in zhu_rank_groups.values())
                     if zhu_has_pair:
-                        for name, cards in zhu_rank_groups.items():
+                        for (name, color), cards in zhu_rank_groups.items():
                             while len(cards) >= 2:
                                 options.append({'cards': [cards[0].card_type, cards[1].card_type],
                                                 'label': '绝门主对'})
@@ -1132,13 +1136,14 @@ class GameRoom:
                 zhu_cards = [c for c in all_cards if c.is_zhu(self.now_level, self.now_color)]
                 rank_count = {}
                 for c in zhu_cards:
-                    if c.name not in rank_count:
-                        rank_count[c.name] = []
-                    rank_count[c.name].append(c)
+                    key = (c.name, c.color)
+                    if key not in rank_count:
+                        rank_count[key] = []
+                    rank_count[key].append(c)
                 has_pair = any(len(v) >= 2 for v in rank_count.values())
 
                 if has_pair:
-                    for name, cards in rank_count.items():
+                    for (name, color), cards in rank_count.items():
                         while len(cards) >= 2:
                             options.append({'cards': [cards[0].card_type, cards[1].card_type],
                                             'label': '跟主对'})
@@ -1179,9 +1184,10 @@ class GameRoom:
                 zhu_cards = [c for c in all_cards if c.is_zhu(self.now_level, self.now_color)]
                 zhu_rank_groups = {}
                 for c in zhu_cards:
-                    if c.name not in zhu_rank_groups:
-                        zhu_rank_groups[c.name] = []
-                    zhu_rank_groups[c.name].append(c)
+                    key = (c.name, c.color)
+                    if key not in zhu_rank_groups:
+                        zhu_rank_groups[key] = []
+                    zhu_rank_groups[key].append(c)
 
                 # 1) 找主连对
                 available_zhu_ranks = sorted(set(
@@ -1207,7 +1213,7 @@ class GameRoom:
                 if not found_zhu_lian:
                     zhu_has_pair = any(len(v) >= 2 for v in zhu_rank_groups.values())
                     if zhu_has_pair:
-                        for name, cards in zhu_rank_groups.items():
+                        for (name, color), cards in zhu_rank_groups.items():
                             while len(cards) >= 2:
                                 options.append({'cards': [cards[0].card_type, cards[1].card_type],
                                                 'label': '跟主对'})
@@ -2129,10 +2135,11 @@ class GameRoom:
         return zhu_cards
 
     def _get_zhu_pairs(self, cards: list[Card]) -> list[list[Card]]:
-        """获取主牌对子。主对=同name的两张主牌（不要求同花色）"""
-        groups: dict[str, list[Card]] = {}
+        """获取主牌对子。主对=同name同花色的两张主牌"""
+        groups: dict[tuple, list[Card]] = {}
         for card in cards:
-            groups.setdefault(card.name, []).append(card)
+            key = (card.name, card.color)
+            groups.setdefault(key, []).append(card)
         pairs: list[list[Card]] = []
         for group in groups.values():
             group = sorted(

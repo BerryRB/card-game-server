@@ -262,7 +262,7 @@ class _GameWrapper:
         played_rep = np.zeros(NUM_CARDS, dtype=np.float32)
         used_played = set()
         for trick in getattr(room, 'epoch_history', []):
-            for cards in trick:
+            for cards in trick['cards']:
                 ids = cards_to_ids(cards, used_played.copy())
                 for cid in ids:
                     played_rep[cid] = 1.0
