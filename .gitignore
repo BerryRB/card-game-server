@@ -8,3 +8,5 @@ __pycache__/
 # Model checkpoints and eval logs (too large for git)
 rl_dmc/models_v*/
 rl_dmc/preplay/models/
+__pycache__/
+.pytest_cache/
