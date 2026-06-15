@@ -17,9 +17,11 @@ def get_dui_and_liandui(cards_in_hand: dict[str, list[Card]]):
     for cards in cards_in_hand.values():
         all_cards.extend(cards)
 
-    # 按花色分组
+    # 按花色分组（王不参与花色分组，单独提取到kings）
     color_cards: dict[str, list[Card]] = {}
     for card in all_cards:
+        if card.is_joker:
+            continue
         if card.color not in color_cards:
             color_cards[card.color] = []
         color_cards[card.color].append(card)
@@ -127,8 +129,15 @@ def card_type_analyze(dan_dict, kings, dui_dict, liandui_dict,
             fuliandui[color] = fu_chains
         zhuliandui.extend(zhu_chains)
 
-    # 分类王和固定主
-    zhudan.extend(kings)
+    # 分类王：同card_type≥2的成对放入zhudui，单张放入zhudan
+    kings_grouped: dict[str, list[Card]] = {}
+    for card in kings:
+        kings_grouped.setdefault(card.card_type, []).append(card)
+    for card_type, group in kings_grouped.items():
+        while len(group) >= 2:
+            zhudui.extend(group[:2])
+            group = group[2:]
+        zhudan.extend(group)
     zhudan.sort(key=lambda c: c.rank)
     zhudui.sort(key=lambda c: c.rank)
 
@@ -265,7 +274,9 @@ def get_zhu_rank(card: Card, now_level: str, now_color: Optional[str]) -> int:
     if card.is_small_joker:
         return 99
     if card.name == now_level:
-        return 80 + (10 if card.color == now_color else 0) + card.rank
+        # 级牌：主花色级牌90，其他花色级牌80，确保不超过小王(99)
+        # 不再加card.rank，避免A(rank=13)时103超过大王100
+        return 80 + (10 if card.color == now_color else 0)
     if card.name == '5':
         return 60 + (10 if card.color == now_color else 0)
     if card.name == '3':
@@ -346,7 +357,6 @@ def determine_play_type(cards: list[Card], now_level: str,
         return 'zhudan' if all_zhu else 'fudan'
 
     if n == 2:
-        # 对子：必须同name同花色（无论主牌副牌）
         if cards[0].name == cards[1].name and cards[0].color == cards[1].color:
             return 'zhudui' if all_zhu else 'fudui'
         # 2张牌但不是对子 → 散牌组合
@@ -399,73 +409,49 @@ def compare_outcards(cards1: list[Card], cards2: list[Card],
     type2 = determine_play_type(cards2, now_level, now_color)
 
     def type_priority(play_type):
-        """牌型优先级：先比牌型大类，再比具体参数
-        
-        牌型大类（从高到低）：
-        1. 连对(lian) → 优先级最高
-        2. 多对(duiN, 非连对的全对子) → 次高
-        3. 单对(dui, zhudui/fudui) → 第三
-        4. 对+散牌(duiN_san) → 第四
-        5. 单张(dan) → 基础
-        6. 全散牌(san) → 最低
-        
-        同大类内：连对数多的>少的，对子数多的>少的
-        不同大类绝对不可互赢（如副对不可被主散牌赢）
-        """
         if play_type is None:
             return (0, 0)
-        # 单张
         if play_type in ("zhudan", "fudan"):
             return (1, 1)
-        # 全散牌（2张+不成对）
         if play_type in ("zhusan", "fusan"):
             return (1, 0)
-        # 多张散牌（fusan3/fusan4等）
-        if play_type.startswith("fusan") or play_type.startswith("zhusan"):
-            try:
-                n = int(play_type.replace("fusan", "").replace("zhusan", ""))
-            except ValueError:
-                n = 2
-            return (1, 0)  # 散牌统一最低层级
-        # 单对
         if play_type in ("zhudui", "fudui"):
-            return (10, 1)
-        # 连对
+            return (2, 1)
         if play_type.startswith("fulian") or play_type.startswith("zhulian"):
             try:
                 pair_count = int(play_type.replace("fulian", "").replace("zhulian", ""))
             except ValueError:
                 pair_count = 2
             return (100 + pair_count, 0)
-        # 多对(非连对，如fudui2/zhudui2)
-        if "dui" in play_type and "_san" not in play_type:
-            base = play_type.split("dui")[1]
-            if base.isdigit():
-                return (50 + int(base), 0)
-        # 对+散牌
         if "_san" in play_type:
             base = play_type.split("dui")[1].split("_san")[0]
-            return (5 + int(base), 0)
+            return (10 + int(base), 1)
+        if "dui" in play_type:
+            base = play_type.split("dui")[1]
+            if base.isdigit():
+                return (20 + int(base), 0)
+        if "san" in play_type:
+            return (5, 0)
         return (0, 0)
 
     pri1 = type_priority(type1)
     pri2 = type_priority(type2)
-
-    # 牌型不同时，只有牌型高的大（散牌不可赢对子）
-    # 但首出的牌必须和跟出的牌张数相同（len已检查）
-    # 牌型优先级不同时：大牌型赢
-    if pri1[0] != pri2[0]:
-        return pri1[0] > pri2[0]
-    # 同一大类内比较具体参数
     if pri1 != pri2:
         return pri1 > pri2
 
     all_zhu1 = all(c.is_zhu(now_level, now_color) for c in cards1)
     all_zhu2 = all(c.is_zhu(now_level, now_color) for c in cards2)
+    has_zhu1 = any(c.is_zhu(now_level, now_color) for c in cards1)
+    has_zhu2 = any(c.is_zhu(now_level, now_color) for c in cards2)
 
+    # 同牌型下，有主牌的一方胜过纯副牌（含混合牌）
     if all_zhu1 and not all_zhu2:
         return True
     if not all_zhu1 and all_zhu2:
+        return False
+    if has_zhu1 and not has_zhu2:
+        return True
+    if not has_zhu1 and has_zhu2:
         return False
 
     if all_zhu1 and all_zhu2:
