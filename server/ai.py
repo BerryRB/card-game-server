@@ -860,6 +860,24 @@ class AI:
                     result = [cards[0]]
                     break
         
+        # 防御性检查：去重（同一Card对象不能出两次）
+        if result:
+            seen_ids = set()
+            deduped = []
+            for c in result:
+                if id(c) not in seen_ids:
+                    seen_ids.add(id(c))
+                    deduped.append(c)
+            if len(deduped) < len(result):
+                # 有重复→用手中其他牌补足
+                used_ids = set(id(c) for c in deduped)
+                for cards in self.player.cards_in_hand.values():
+                    for c in cards:
+                        if id(c) not in used_ids and len(deduped) < len(result):
+                            deduped.append(c)
+                            used_ids.add(id(c))
+                result = deduped
+        
         # v10.1: 将追踪状态写回Player对象（跨decide_play持久化）
         tracking = getattr(self.player, 'ai_tracking', None)
         if tracking is not None:
@@ -1687,11 +1705,13 @@ class AI:
             if len(non_score_fudan) >= 2:
                 return non_score_fudan[:2]
             if len(non_score_fudan) >= 1:
+                first_card = non_score_fudan[0]
+                first_id = id(first_card)
                 for c in sorted(a['fudan'].keys()):
                     if c != color and a['fudan'][c]:
-                        nonscore2 = [x for x in a['fudan'][c] if not x.has_score]
+                        nonscore2 = [x for x in a['fudan'][c] if not x.has_score and id(x) != first_id]
                         if nonscore2:
-                            return [non_score_fudan[0], nonscore2[0]]
+                            return [first_card, nonscore2[0]]
             # v9.10f: 没有第二个无分副牌，出主牌（不给对手送分）
             if a['zhudan']:
                 return [a['zhudan'][0]]
@@ -1831,11 +1851,12 @@ class AI:
                 # 出最小无分牌
                 if non_score_fudan:
                     return non_score_fudan[:n]
-                if zhudan:
-                    nonscore_zhu = [c for c in zhudan if not c.has_score]
+                a2 = self._get_analysis()
+                if a2['zhudan']:
+                    nonscore_zhu = [c for c in a2['zhudan'] if not c.has_score]
                     if nonscore_zhu:
                         return nonscore_zhu[:n]
-                    return zhudan[:n]
+                    return a2['zhudan'][:n]
             else:
                 # 闲家：积极贴分牌（得分过80=闲家赢）
                 score_fudan = self._get_score_fudan()

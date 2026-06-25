@@ -2157,6 +2157,21 @@ class GameRoom:
                             'cards': [c.to_dict() for c in play_cards],
                             'result': result,
                         })
+                    else:
+                        # AI出牌被拒→兜底出牌
+                        import logging
+                        logging.warning(f'AI出牌被拒(seat={i}): {result.get("msg","")} cards={card_strs}, 使用兜底出牌')
+                        fallback = self._fallback_play(p, is_first)
+                        if fallback:
+                            fb_strs = [c.card_type for c in fallback]
+                            fb_result = self.handle_play(i, fb_strs)
+                            if fb_result['status'] == 'ok':
+                                actions.append({
+                                    'type': 'play',
+                                    'seat': i,
+                                    'cards': [c.to_dict() for c in fallback],
+                                    'result': fb_result,
+                                })
 
         return actions
 
@@ -2404,8 +2419,93 @@ class GameRoom:
                             'cards': [c.to_dict() for c in play_cards],
                             'result': result,
                         })
+                    else:
+                        # AI出牌被拒→兜底：出手中最小单牌
+                        import logging
+                        logging.warning(f'AI出牌被拒(seat={self.current_turn}): {result.get("msg","")} cards={card_strs}, 使用兜底出牌')
+                        fallback = self._fallback_play(p, is_first)
+                        if fallback:
+                            fb_strs = [c.card_type for c in fallback]
+                            fb_result = self.handle_play(self.current_turn, fb_strs)
+                            if fb_result['status'] == 'ok':
+                                actions.append({
+                                    'type': 'play',
+                                    'seat': self.current_turn,
+                                    'cards': [c.to_dict() for c in fallback],
+                                    'result': fb_result,
+                                })
 
         return actions
+
+    def _fallback_play(self, player, is_first: bool) -> list:
+        """AI出牌被拒时的兜底出牌：尝试凑出合法牌型
+        
+        策略：
+        1. 首出：出手中最小单牌
+        2. 跟牌：按引擎规则凑合法出牌（同花色优先→主牌→其他）
+        """
+        from server.card import Card
+        if player.card_count == 0:
+            return []
+        
+        if is_first:
+            # 首出：出最小单牌
+            all_cards = []
+            for cards in player.cards_in_hand.values():
+                all_cards.extend(cards)
+            if all_cards:
+                return [min(all_cards, key=lambda c: c.rank)]
+            return []
+        
+        # 跟牌：需要凑出与首出数量相同的合法牌
+        if not self.epoch_cards:
+            return []
+        
+        first_cards = self.epoch_cards[0]
+        n = len(first_cards)
+        first_color = first_cards[0].color
+        first_is_zhu = all(c.is_zhu(self.now_level, self.now_color) for c in first_cards)
+        
+        result = []
+        
+        if first_is_zhu:
+            # 首出主牌→必须先出主牌
+            hand_zhu = []
+            for cards in player.cards_in_hand.values():
+                hand_zhu.extend([c for c in cards if c.is_zhu(self.now_level, self.now_color)])
+            hand_zhu.sort(key=lambda c: c.rank)
+            result.extend(hand_zhu[:min(len(hand_zhu), n)])
+        else:
+            # 首出副牌→先出同花色副牌
+            hand_color = player.cards_in_hand.get(first_color, [])
+            hand_color_fu = [c for c in hand_color if not c.is_zhu(self.now_level, self.now_color)]
+            hand_color_fu.sort(key=lambda c: c.rank)
+            must_play = min(len(hand_color_fu), n)
+            result.extend(hand_color_fu[:must_play])
+            
+            # 不够→补主牌
+            if len(result) < n:
+                hand_zhu = []
+                for cards in player.cards_in_hand.values():
+                    hand_zhu.extend([c for c in cards if c.is_zhu(self.now_level, self.now_color)])
+                hand_zhu.sort(key=lambda c: c.rank)
+                used_ids = set(id(c) for c in result)
+                for c in hand_zhu:
+                    if id(c) not in used_ids and len(result) < n:
+                        result.append(c)
+        
+        # 还不够→补其他牌
+        if len(result) < n:
+            used_ids = set(id(c) for c in result)
+            all_cards = []
+            for cards in player.cards_in_hand.values():
+                all_cards.extend(cards)
+            all_cards.sort(key=lambda c: c.rank)
+            for c in all_cards:
+                if id(c) not in used_ids and len(result) < n:
+                    result.append(c)
+        
+        return result
 
     def _auto_play_koupai(self) -> list[dict]:
         """KOUPAI阶段机器人自动扣牌"""
