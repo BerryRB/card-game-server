@@ -1352,15 +1352,20 @@ class AI:
         return []
 
     def _has_color_cards(self, color: str) -> bool:
-        """检查是否有指定花色的牌（含该花色的主牌）
+        """检查是否有指定花色的副牌（排除该花色的主牌）
 
-        注意：引擎的player.has_color()检查的是cards_in_hand中该花色键下的所有牌，
-        包括该花色的主牌（如级牌、2/3/5等）。当首出副牌时，引擎要求：
-        有该花色时必须出同花色或主牌。所以即使该花色只有主牌（无副牌），
-        引擎也认为"有同花色"，AI必须出该花色的主牌来跟牌。
+        引擎_validate_follow的逻辑：
+        - 首出副牌时，引擎按hand_color_fu（同花色非主牌）数量决定must_play_color
+        - 如果同花色只有主牌（级牌/2/3/5），hand_color_fu=0，must_play_color=0
+          → 引擎视为绝门，不强制出同花色
+        - 所以AI的"有同花色"判断也应只看副牌，否则会误入"有同花色"分支
+          虽然后续all_color_fu=0会fallback到绝门，但浪费判断且可能导致策略次优
+        
+        v10.1: 修复误判——只统计同花色非主牌数量
         """
         cards = self.player.cards_in_hand.get(color, [])
-        return len(cards) > 0
+        fu_count = sum(1 for c in cards if not c.is_zhu(self.now_level, self.now_color))
+        return fu_count > 0
 
     def _get_color_single_cards(self, color: str, fudan, fudui, fuliandui, zhudan) -> list[Card]:
         """获取指定花色可用于跟副单的牌
