@@ -51,26 +51,34 @@ def get_dui_and_liandui(cards_in_hand: dict[str, list[Card]]):
 
         dui_dict[color] = sorted(dui_list, key=lambda c: c.rank)
 
-        # 提取连对
+        # 提取连对（基于对子rank序列检测连续rank）
         liandui_list: list[list[Card]] = []
         sorted_dui = sorted(dui_list, key=lambda c: c.rank)
 
-        if len(sorted_dui) >= 4:
+        # 按rank分组提取对子（每对用2张Card表示）
+        dui_by_rank: dict[int, list[Card]] = {}
+        for card in sorted_dui:
+            if card.rank not in dui_by_rank:
+                dui_by_rank[card.rank] = []
+            dui_by_rank[card.rank].append(card)
+
+        sorted_ranks = sorted(dui_by_rank.keys())
+
+        if len(sorted_ranks) >= 2:
             i = 0
-            while i < len(sorted_dui):
-                chain = [sorted_dui[i], sorted_dui[i + 1]] if i + 1 < len(sorted_dui) else []
-                if len(chain) == 2 and chain[0].rank + 1 == chain[1].rank:
-                    # 连对起点
-                    j = i + 2
-                    while j + 1 < len(sorted_dui) and sorted_dui[j].rank == sorted_dui[j - 2].rank + 1:
-                        chain.append(sorted_dui[j])
-                        chain.append(sorted_dui[j + 1])
-                        j += 2
-                    if len(chain) >= 4:
-                        liandui_list.append(chain)
-                    i = j
-                else:
-                    i += 2
+            while i < len(sorted_ranks):
+                chain_ranks = [sorted_ranks[i]]
+                j = i + 1
+                while j < len(sorted_ranks) and sorted_ranks[j] == sorted_ranks[j - 1] + 1:
+                    chain_ranks.append(sorted_ranks[j])
+                    j += 1
+                if len(chain_ranks) >= 2:
+                    # 连对：收集所有对子的牌
+                    chain_cards = []
+                    for r in chain_ranks:
+                        chain_cards.extend(dui_by_rank[r])
+                    liandui_list.append(chain_cards)
+                i = j if j > i + 1 else i + 1
 
         if liandui_list:
             liandui_dict[color] = liandui_list

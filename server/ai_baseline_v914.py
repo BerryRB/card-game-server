@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
-"""升级(Trump)纸牌游戏 - AI出牌策略（v10真人经验版）
+"""升级(Trump)纸牌游戏 - AI出牌策略（v9真人高手版）
 
-v10核心改进——基于真人升级出牌策略经验，全面重构：
+v9核心改进——基于100局数据分析，向真人高手思路对齐：
 
-真人核心经验：
-1. 【得分核心理念】先出确定能控场的副牌（副大单→副大对→副对试探→队友绝门→主牌）
-2. 【5分牌不无脑贴】5有赢轮潜力时留着自己赢轮跑掉，不是逢贴必出
-3. 【保底策略】底牌有分+有能力保底+后期→保留主牌，优先出副牌
-4. 【队友绝门利用】出队友绝门对手未绝门的花色→队友毙牌赢轮
-5. 【副对谨慎】对10/对K被毙丢20分，游戏前期不出危险分对
-6. 【毙牌优化】对手没绝门→亮主花色分牌/小牌毙；对手也绝门→大主牌确保赢
-7. 【主牌策略分化】前期出主大单让队友贴分，后期留主大单控场压牌
+核心数据发现（v8的100局统计）：
+1. 先手出分牌66.4%被对手收走 → 不主动出分牌，分牌留给跟牌时贴
+2. 先手出副对82.5%被对手收走 → 副对几乎必被主对毙，不出副对先手
+3. 先手出主单赢率仅29.6% → 主单先手不安全，主对/主连对才可靠
+4. 清短门出大牌浪费 → 大牌留着跟牌管牌更有价值
+
+真人高手核心原则：
+1. 【不送分】先手绝不主动出分牌（5/10/K），分牌留给队友大时贴
+2. 【副对慎出】副对先手几乎必被毙，只有AK连对/A对这种顶级副对才先手出
+3. 【大牌跟牌】大牌（A/K/Q）留着跟牌时管住对手，比先手出更有效
+4. 【清门出小】清短门出最小牌，保留大牌后续跟牌用
+5. 【主牌控场】主对/主连对才是可靠的先手牌型
+6. 【对子策略】出副对要出就出最大的，小对留着跟牌更安全
 """
 
 from __future__ import annotations
@@ -24,7 +29,7 @@ from server.constants import SCORE_CARDS, FIXED_ZHU_NAMES
 
 
 class AI:
-    """AI出牌策略（v10真人经验版）"""
+    """AI出牌策略（v9真人高手版）"""
 
     def __init__(self, player, now_level: str, now_color: Optional[str] = None,
                  score_koupai: int = 0):
@@ -33,16 +38,6 @@ class AI:
         self.now_color = now_color
         self.score_koupai = score_koupai
         self._cache = None
-        # v10.1: 从Player对象恢复追踪状态（跨decide_play持久化）
-        tracking = getattr(player, 'ai_tracking', None)
-        if tracking is not None:
-            self._played_tricks = tracking.get('played_tricks', 0)
-            self._mate_void_colors = tracking.get('mate_void_colors', set()).copy()
-            self._opponent_void_colors = tracking.get('opponent_void_colors', set()).copy()
-        else:
-            self._played_tricks = 0
-            self._mate_void_colors = set()
-            self._opponent_void_colors = set()
 
     def _get_analysis(self):
         """获取并缓存手牌分析结果"""
@@ -213,240 +208,6 @@ class AI:
         包含K或A的连对是强连对
         """
         return any(c.rank >= 11 for c in chain)
-
-    # ========== v10新增：局势感知辅助方法 ==========
-
-    def _update_trick_state(self, epoch_cards, epoch_players, is_first):
-        """v10: 每次decide_play时更新跨轮追踪状态
-        
-        通过当前轮出牌信息推算绝门信息：
-        - 首出副牌时，跟牌出主牌→该花色绝门
-        - 非首出时，不更新（信息不完整）
-        """
-        if not is_first and epoch_cards and len(epoch_cards) >= 2:
-            first_cards = epoch_cards[0]
-            if first_cards:
-                first_type = determine_play_type(first_cards, self.now_level, self.now_color)
-                # 只在首出副牌时判断绝门（主牌轮无法判断）
-                if first_type and first_type.startswith('fu'):
-                    first_color = first_cards[0].color
-                    for i, cards in enumerate(epoch_cards[1:], 1):
-                        if not cards:
-                            continue
-                        player_id = epoch_players[i].player_id if i < len(epoch_players) else -1
-                        is_mate = (player_id % 2) == (self.player.player_id % 2)
-                        # 判断该玩家是否绝门：出了主牌或不同花色副牌
-                        played_fu_same_color = any(
-                            c.color == first_color and not self._is_zhu(c) for c in cards)
-                        if not played_fu_same_color:
-                            if is_mate:
-                                self._mate_void_colors.add(first_color)
-                            else:
-                                self._opponent_void_colors.add(first_color)
-
-    def _is_certain_max_fudan(self, card: Card) -> bool:
-        """v10.1: 判断一张副单是否确定是（或大概率是）该花色最大牌
-        
-        真人经验：确定能控场的副牌优先出，让队友贴分。
-        扩展判断：
-        1. A（非主牌level时）一定是最大
-        2. K在中后期（6+轮）大概率最大
-        3. Q在后期（10+轮）大概率最大
-        4. 该花色fudan中rank最大的牌→当前最大
-        """
-        if self._is_zhu(card):
-            return False
-        # A一定是最大副牌（但A是level时变成了主牌，不会到这里）
-        if card.name == 'A':
-            return True
-        # K在游戏中后期（6+轮）大概率是最大
-        if card.name == 'K' and self._played_tricks >= 6:
-            return True
-        # Q在后期（10+轮）大概率最大
-        if card.name == 'Q' and self._played_tricks >= 10:
-            return True
-        # 该花色fudan中rank最大的牌且rank>=Q(11)→大概率最大
-        # 不算J及以下的——J太容易被Q/K/A压
-        a = self._get_analysis()
-        color_fudan = a['fudan'].get(card.color, [])
-        if color_fudan:
-            max_rank = max(c.rank for c in color_fudan)
-            if card.rank == max_rank and card.rank >= 11:  # Q及以上
-                return True
-        return False
-
-    def _is_likely_max_fudan(self, card: Card) -> bool:
-        """v12: 判断一张副单是否大概率是该花色最大牌（放宽版）
-
-        比_is_certain_max_fudan更宽松：
-        - J以上且是该花色最大→大概率最大
-        - A一定最大，K前期也大概率最大
-        """
-        if self._is_zhu(card):
-            return False
-        # A一定是最大副牌
-        if card.name == 'A':
-            return True
-        # K大概率最大（不需要等6轮）
-        if card.name == 'K':
-            return True
-        # Q大概率最大
-        if card.name == 'Q':
-            return True
-        # J在前期(≤3轮)大概率最大
-        if card.name == 'J' and self._played_tricks <= 3:
-            return True
-        # 该花色fudan中rank最大的牌且rank>=J(11)→大概率最大
-        a = self._get_analysis()
-        color_fudan = a['fudan'].get(card.color, [])
-        if color_fudan:
-            max_rank = max(c.rank for c in color_fudan)
-            if card.rank == max_rank and card.rank >= 11:  # J及以上
-                return True
-        return False
-
-    def _is_certain_max_fudui(self, cards: list[Card]) -> bool:
-        """v10: 判断一副对是否确定是最大副对
-        
-        A对一定最大；K对在后期大概率最大。
-        """
-        if not cards or len(cards) < 2:
-            return False
-        if any(self._is_zhu(c) for c in cards):
-            return False
-        top_rank = max(c.rank for c in cards)
-        if top_rank >= 13:  # A对
-            return True
-        if top_rank >= 12 and self._played_tricks >= 8:  # K对+后期
-            return True
-        return False
-
-    def _is_game_midlate(self) -> bool:
-        """v10: 判断是否游戏中后期（剩余手牌≤13张，约第7轮起）"""
-        total = sum(len(cards) for cards in self.player.cards_in_hand.values())
-        return total <= 13
-
-    def _can_protect_koupai(self) -> bool:
-        """v10: 判断是否具备保底能力
-        
-        真人经验：底牌有分时，需要保留主对保底。
-        条件：主对数≥2 + 有主大单确保倒数第二轮能赢。
-        """
-        a = self._get_analysis()
-        zhu_dui_count = len(a['zhudui']) // 2  # 主对数量
-        has_big_zhu = len(a['zhudan']) >= 2  # 有大主单
-        return zhu_dui_count >= 2 and has_big_zhu
-
-    def _should_conserve_zhu_for_koupai(self) -> bool:
-        """v12: 是否需要为主牌保底而保留主牌
-        
-        庄家：底牌有分+具备保底能力+游戏中后期→保留主牌
-        闲家：不需要保底（闲家不扣底），始终返回False
-        
-        v12改进：放宽触发时机——有底分+有能力保底+剩余≤20张（约第5轮起）
-        前期不需要保底（牌多时随便打），中后期必须保留主牌
-        """
-        if not self.player.is_banker:
-            return False  # 闲家不保底
-        if self.score_koupai <= 0:
-            return False  # 底牌没分，不需要保底
-        if not self._can_protect_koupai():
-            return False  # 没能力保底，正常打
-        return self._is_game_midlate()  # 后期才考虑保底
-
-    def _get_mate_jue_for_exploit(self) -> list[str]:
-        """v10: 获取队友绝门但对手未绝门的花色列表
-        
-        真人经验：出队友绝门对手未绝门的牌→队友可以毙牌赢轮。
-        """
-        result = []
-        for color in self._mate_void_colors:
-            if color not in self._opponent_void_colors:
-                result.append(color)
-        return result
-
-    def _is_dangerous_score_pair(self, cards: list[Card]) -> bool:
-        """v10: 判断副对是否是危险分对（对10/对K，出时被毙丢20分）
-        
-        真人经验：对10这种要谨慎判断，被对手毙了一下丢20分。
-        """
-        if not cards:
-            return False
-        total_score = sum(c.score for c in cards)
-        return total_score >= 15  # 对10=20分，对K=20分，对5=10分
-
-    def _5_has_winning_potential(self, card: Card) -> bool:
-        """v10.1: 判断5分牌是否有自己赢轮的潜力
-        
-        真人经验：5很多时候具备赢轮的能力，可以自己赢轮时顺便跑掉，
-        不要无脑贴给队友。
-        
-        v10.1修正：副5也有潜力——如果该花色5是手中该花色fudan最大的，
-        或者该花色只剩1-2张fudan时5有希望领打。
-        """
-        if card.name != '5':
-            return False
-        color = card.color
-        # 该花色5是否是主牌？主牌5有赢轮能力
-        if self._is_zhu(card):
-            return True
-        # v10.1: 副5的潜力判断
-        a = self._get_analysis()
-        color_fudan = a['fudan'].get(color, [])
-        if not color_fudan:
-            return False
-        # 如果该花色副单只有1-2张，5大概率要领打→有潜力
-        if len(color_fudan) <= 2:
-            return True
-        # 如果5是该花色fudan中rank最高的（只剩5和小牌），有潜力
-        max_rank = max(c.rank for c in color_fudan)
-        if card.rank >= max_rank - 3:  # 5接近最大时有潜力（放宽：-3而非-2）
-            return True
-        return False
-
-    def _best_trump_card_for_kill(self, epoch_score: int) -> Optional[Card]:
-        """v10: 选择最优毙牌主牌
-        
-        真人经验：
-        - 对手都没绝门→优先用亮主花色分牌毙牌（10/K级牌慎用），没分用亮主花色小牌
-        - 自己和对手都绝门→场上有分用大主牌毙，无分用防10/K跑的主牌
-        """
-        a = self._get_analysis()
-        zhudan = a['zhudan']
-        if not zhudan:
-            return None
-
-        # 检查对手是否也绝门
-        opponent_also_void = len(self._opponent_void_colors) > 0
-
-        if opponent_also_void and epoch_score >= 5:
-            # 对手也绝门+场上有分→用大主牌确保赢（级牌/大小王衡量后使用）
-            # 优先用级牌或主花色大牌
-            for c in reversed(zhudan):
-                if c.rank >= 10:  # Q级以上的主牌
-                    return c
-            return zhudan[-1]  # 没有大牌就用最大
-
-        # 对手没绝门（或场上无分）→优先用亮主花色分牌/小牌
-        # 找亮主花色的牌
-        liang_color_zhu = [c for c in zhudan if c.color == self.now_color]
-        if liang_color_zhu:
-            # 优先出亮主花色的分牌
-            score_liang = [c for c in liang_color_zhu if c.has_score]
-            if score_liang:
-                # 10和K是级牌时慎用（级牌太大，留着控场更好）
-                level_name = str(self.now_level)
-                safe_score = [c for c in score_liang if c.name != level_name]
-                if safe_score:
-                    return safe_score[0]  # 出亮主花色5分牌
-                # 只有级牌分牌，场上高分时才用
-                if epoch_score >= 10:
-                    return score_liang[0]
-            # 没分牌→出亮主花色小牌（保留大牌控场）
-            return liang_color_zhu[0]
-
-        # 没有亮主花色主牌→出最小主牌
-        return zhudan[0]
 
     # ========== 亮主策略 ==========
 
@@ -831,12 +592,6 @@ class AI:
     def decide_play(self, epoch_cards: list[list[Card]], epoch_players: list,
                     is_first: bool, now_scores: int) -> list[Card]:
         """决定出牌"""
-        # v10: 更新跨轮追踪状态
-        self._update_trick_state(epoch_cards, epoch_players, is_first)
-        # v10: 首出时递增轮数计数器
-        if is_first:
-            self._played_tricks += 1
-
         a = self._get_analysis()
         zhudan = a['zhudan']
         zhudui = a['zhudui']
@@ -857,15 +612,7 @@ class AI:
         if not result and self.player.card_count > 0:
             for cards in self.player.cards_in_hand.values():
                 if cards:
-                    result = [cards[0]]
-                    break
-        
-        # v10.1: 将追踪状态写回Player对象（跨decide_play持久化）
-        tracking = getattr(self.player, 'ai_tracking', None)
-        if tracking is not None:
-            tracking['played_tricks'] = self._played_tricks
-            tracking['mate_void_colors'] = self._mate_void_colors
-            tracking['opponent_void_colors'] = self._opponent_void_colors
+                    return [cards[0]]
         
         return result
 
@@ -873,24 +620,36 @@ class AI:
 
     def _first_play(self, zhudan, zhudui, zhuliandui,
                     fudan, fudui, fuliandui, now_scores) -> list[Card]:
-        """v12领打策略——副牌优先+庄闲差异化
+        """首位出牌策略（v9真人高手版）
 
-        v12核心改进（基于500局数据分析）：
-        - 前3轮首出主牌率68%→目标40%：放宽副单出牌条件，先清副牌再出主牌
-        - 庄家首出主牌门槛提高：只有确定赢的主大牌才首出
-        - 分牌保护：5/K在不确定赢时不出
-
-        优先级：
-        1. 确定最大副单→让队友贴分（放宽：J以上也算大概率最大）
-        2. 副大牌试探出（rank≥9，不需要确定赢，先出再说）
-        3. 确定最大副对→让队友贴分
-        4. 副对试探出
-        5. 队友绝门利用
-        6. 剩余副小单/副小对（v12新增：在出主牌前先清副牌）
-        7. 主牌策略（庄家：只出确定赢的大主牌；闲家：自由出主牌）
-        8. 兜底
+        核心原则（基于数据分析）：
+        1. 不主动出分牌——66%会被对手收走
+        2. 副对先手赢率极低(17%)，只有强对(K对/A对)才先手出
+        3. 副单出无分小牌试探，大牌留着跟牌
+        4. 清短门出小牌（不是大牌！）
+        5. 主连对/主对是可靠的先手牌型
         """
-        # 尾局策略：赢最后一轮=控制扣底（庄家更重要）
+        is_banker = self._is_banker_team()
+
+        if is_banker:
+            return self._first_play_banker(zhudan, zhudui, zhuliandui,
+                                           fudan, fudui, fuliandui, now_scores)
+        else:
+            return self._first_play_defender(zhudan, zhudui, zhuliandui,
+                                             fudan, fudui, fuliandui, now_scores)
+
+    def _first_play_banker(self, zhudan, zhudui, zhuliandui,
+                           fudan, fudui, fuliandui, now_scores) -> list[Card]:
+        """庄家先手出牌策略（v9）
+
+        庄家目标：控场、拿分、保过庄
+        真人高手庄家思路：
+        1. 主连对/主对先手——最可靠的赢轮方式
+        2. 强副连对(AK连对等)——对手只能用主连对管
+        3. 清短门出小牌——绝门后可以毙牌
+        4. 出无分小副单试探——不送分
+        """
+        # v9.2: 庄家尾局策略——不管底牌分多少，都应出主牌争赢最后一轮
         if self._is_endgame():
             for chain in zhuliandui:
                 return chain
@@ -899,94 +658,57 @@ class AI:
             if zhudan:
                 return [zhudan[-1]]
 
-        # ===== 1. 确定最大副单——让队友贴分（v12放宽条件）=====
-        for color in sorted(fudan.keys()):
-            for card in reversed(fudan[color]):  # 从大到小找
-                if self._is_likely_max_fudan(card):
-                    # v12: 确定大概率最大的副单就出，不要求无分
-                    # 有分的K/A更要出（让队友贴分的同时跑自己的分）
-                    if not card.has_score:
-                        return [card]  # 无分确定最大副单，最安全
-                    # 有分但确定最大也出（A/K的分在确定赢时跑掉最安全）
-                    if card.rank >= 12:  # K及以上确定赢
-                        return [card]
+        # 1. 主连对（最可靠的先手赢轮）
+        for chain in zhuliandui:
+            return chain
 
-        # ===== 2. 副大牌试探出（v12新增）=====
-        # 真人经验：不确定赢的副大牌也要先出，比出主牌好
-        # rank≥9(9/J/Q)的副单先出试探，让队友决定是否贴分
-        for color in sorted(fudan.keys()):
-            for card in reversed(fudan[color]):  # 从大到小
-                if card.rank >= 9 and not card.has_score:
-                    return [card]  # 出无分的中大副单试探
-        # 有分的中大副单也出（rank≥J，有5分的9/10不出）
-        for color in sorted(fudan.keys()):
-            for card in reversed(fudan[color]):
-                if card.rank >= 11 and card.has_score:
-                    # J的5分不出（太小），10的10分在前期谨慎
-                    if card.score <= 5 and self._played_tricks <= 3:
-                        continue
-                    return [card]
+        # v9.8: 移除强副连对先手（从未触发）
 
-        # ===== 3. 确定最大副对——让队友贴分 =====
-        for color in sorted(fudui.keys()):
-            if len(fudui[color]) >= 2:
-                for i in range(len(fudui[color]) - 1, 0, -2):
-                    if i >= 1 and fudui[color][i].name == fudui[color][i-1].name:
-                        pair = fudui[color][i-1:i+1]
-                        if self._is_certain_max_fudui(pair):
-                            if not self._is_dangerous_score_pair(pair):
-                                return pair
+        # 3. 主对（可靠赢轮）
+        if len(zhudui) >= 2:
+            return zhudui[-2:]
 
-        # ===== 4. 副对试探出 =====
-        for color in sorted(fudui.keys()):
-            if len(fudui[color]) >= 2:
-                for i in range(len(fudui[color]) - 1, 0, -2):
-                    if i >= 1 and fudui[color][i].name == fudui[color][i-1].name:
-                        pair = fudui[color][i-1:i+1]
-                        if not self._is_dangerous_score_pair(pair):
-                            return pair
-                if self._is_game_midlate():
-                    for i in range(0, len(fudui[color]), 2):
-                        if i + 1 < len(fudui[color]) and fudui[color][i].name == fudui[color][i+1].name:
-                            return fudui[color][i:i+2]
+        # v9.8: 移除强副对先手（赢率25%太低，不如主单49.6%）
+        # 强副对等跟牌时再出
 
-        # ===== 5. 队友绝门对手未绝门的副单——让队友毙牌赢轮 =====
-        exploit_colors = self._get_mate_jue_for_exploit()
-        if exploit_colors:
-            for color in exploit_colors:
-                if color in fudan and fudan[color]:
-                    nonscore = [c for c in fudan[color] if not c.has_score]
-                    if nonscore:
-                        return [nonscore[0]]
-                    if fudan[color]:
-                        return [fudan[color][0]]
+        # v9.9: 先手主单策略——优先出级牌(赢率76%)，否则出最小主单(赢率35%但省牌)
+        if zhudan:
+            # 优先出级牌（赢率76%，远高于普通主牌35%）
+            level_card = None
+            for c in zhudan:
+                if c.name == str(self.now_level):
+                    level_card = c
+                    break
+            if level_card:
+                return [level_card]
+            return [zhudan[0]]  # 无级牌出最小主单
 
-        # ===== 6. 副牌清场（v12新增：在出主牌前先清剩余副牌）=====
-        # 真人经验：手里有副牌就先出副牌，不要急着出主牌
-        # 6a. 清短门副小单
+        # 5. 清短门——v9.10: 更精细的清门策略
         weak_colors = []
         for color in sorted(fudan.keys()):
             card_count = self._get_color_card_count(color)
             fu_dan_count = len(fudan.get(color, []))
-            if fu_dan_count > 0:
+            # v9.7: 放宽到5张以下
+            if card_count <= 5 and fu_dan_count > 0:
                 has_nonscore = any(not c.has_score for c in fudan[color])
                 weak_colors.append((color, card_count, fu_dan_count, has_nonscore))
         if weak_colors:
-            # 短门优先出（创造绝门机会）
-            weak_colors.sort(key=lambda x: (not x[3], x[1]))
+            # v9.10: 优先清有无分牌的花色（出无分牌不送分）
+            # 如果只剩分牌，跳过该花色（清门送分不划算，等绝门后毙牌）
+            weak_colors.sort(key=lambda x: (not x[3], x[1]))  # 有无分牌优先，牌少的优先
             for color, _, _, has_nonscore in weak_colors:
                 if has_nonscore:
                     nonscore = [c for c in fudan[color] if not c.has_score]
                     if nonscore:
-                        return [nonscore[0]]
-                # v12: 分牌也出（5分可出，10/K留到后面处理）
+                        return [nonscore[0]]  # 出最小无分牌
+                # v9.10: 只剩分牌时也出（绝门价值>送5分，但不送10/K）
                 score_cards = [c for c in fudan[color] if c.has_score]
-                if score_cards:
-                    safe_scores = [c for c in score_cards if c.score <= 5]
-                    if safe_scores:
-                        return [safe_scores[0]]
+                if score_cards and score_cards[0].score <= 5:
+                    return [score_cards[0]]  # 出5分牌（只送5分换绝门）
+                # K/10分牌不清门，太贵
+            # 所有弱花色都只有高分牌，不清门，走后续逻辑
 
-        # 6b. 出无对子花色的小单
+        # 6. 出无对子花色的小单
         for color in sorted(fudan.keys()):
             if fudan[color] and not self._has_pair_in_color(color):
                 nonscore = [c for c in fudan[color] if not c.has_score]
@@ -994,7 +716,7 @@ class AI:
                     return [nonscore[0]]
                 return [fudan[color][0]]
 
-        # 6c. 副小单兜底
+        # 7. 出副小单
         for color in sorted(fudan.keys()):
             if fudan[color]:
                 nonscore = [c for c in fudan[color] if not c.has_score]
@@ -1002,48 +724,101 @@ class AI:
                     return [nonscore[0]]
                 return [fudan[color][0]]
 
-        # 6d. 副连对
+        # 8. 弱副连对（虽然赢率不高，但比出副单强）
         for color in sorted(fuliandui.keys()):
             if fuliandui[color]:
                 return fuliandui[color][0]
 
-        # ===== 7. 主牌策略（v12：庄家门槛提高）=====
-        conserve_zhu = self._should_conserve_zhu_for_koupai()
+        # 9. 弱副对（最后才出）
+        small_dui_color = None
+        small_dui_rank = 999
+        for color in sorted(fudui.keys()):
+            if len(fudui[color]) >= 2:
+                top_rank = fudui[color][0].rank
+                if top_rank < small_dui_rank:
+                    small_dui_rank = top_rank
+                    small_dui_color = color
+        if small_dui_color:
+            return fudui[small_dui_color][:2]
 
-        if conserve_zhu:
-            # 保底策略：有底分+有能力保底+后期→保留主牌
-            if len(zhudui) >= 2:
-                return zhudui[:2]
-            if zhudan:
-                return [zhudan[0]]
-        else:
-            if self.player.is_banker:
-                # v12庄家：只有确定能赢的主牌才首出
-                # 大主单（top 30%的主单）或主大对
-                for chain in zhuliandui:
-                    return chain
-                if len(zhudui) >= 2:
-                    return zhudui[-2:]  # 最大主对
-                # v12: 庄家只出大主单（rank在主单中排名前30%）
-                if zhudan:
-                    big_threshold = max(1, len(zhudan) * 7 // 10)  # 前30%的rank门槛
-                    for card in reversed(zhudan):  # 从大到小
-                        if card.rank >= zhudan[big_threshold - 1].rank:
-                            return [card]
-                    # 没有大主单→出最小主单（但这种情况说明主牌很弱，应该先清了副牌）
-                    return [zhudan[0]]
-            else:
-                # 闲家：自由出主牌（和v11一样）
-                for chain in zhuliandui:
-                    return chain
-                if len(zhudui) >= 2:
-                    return zhudui[-2:]
-                if zhudan:
-                    return [zhudan[0]]
-
-        # ===== 8. 主单兜底 =====
+        # 10. 主单（出最大的，争取赢轮）
         if zhudan:
+            return [zhudan[-1]]
+
+        return []
+
+    def _first_play_defender(self, zhudan, zhudui, zhuliandui,
+                             fudan, fudui, fuliandui, now_scores) -> list[Card]:
+        """闲家先手出牌策略（v9）
+
+        闲家目标：抢分、创造毙牌机会
+        真人高手闲家思路：
+        1. 清短门出小牌创造绝门→毙牌拿分
+        2. 主连对/主对先手赢轮拿分
+        3. 强副连对直接拿分
+        4. 绝不出分牌先手——等队友大时贴分
+        """
+        zhu_count = self._count_zhu_in_hand()
+
+        # 尾局策略：v9.2——闲家尾局也必须出主牌争最后一轮
+        # 真人高手尾局思路：赢最后一轮=控制扣底，不管底牌分多少
+        if self._is_endgame():
+            for chain in zhuliandui:
+                return chain
+            if len(zhudui) >= 2:
+                return zhudui[-2:]
+            if zhudan:
+                return [zhudan[-1]]
+
+        # 1. 主连对/主对先手（赢率55%+，优先出）
+        for chain in zhuliandui:
+            return chain
+        if len(zhudui) >= 2:
+            return zhudui[-2:]
+
+        # 2. ★清短门创造绝门（v9.11: 保留但微调）
+        short_colors = []
+        for color in sorted(fudan.keys()):
+            card_count = self._get_color_card_count(color)
+            fu_dan_count = len(fudan.get(color, []))
+            fu_dui_count = len(fudui.get(color, []))
+            if fu_dan_count > 0 and fu_dui_count == 0:
+                if card_count <= 3:
+                    short_colors.append((color, card_count, 0))
+                elif card_count <= 5 and zhu_count >= 5:
+                    short_colors.append((color, card_count, 1))
+            elif fu_dan_count > 0 and fu_dui_count > 0 and card_count <= 4 and zhu_count >= 5:
+                short_colors.append((color, card_count, 2))
+
+        if short_colors:
+            short_colors.sort(key=lambda x: (x[2], x[1]))
+            for color, _, _ in short_colors:
+                nonscore = [c for c in fudan[color] if not c.has_score]
+                if nonscore:
+                    return [nonscore[0]]
+            for color, _, _ in short_colors:
+                score_cards = [c for c in fudan[color] if c.has_score]
+                if score_cards and score_cards[0].score <= 5:
+                    return [score_cards[0]]
+
+        # 3. 主单先手（v9.9: 优先级牌赢率76%，否则出最小）
+        if zhudan:
+            level_card = None
+            for c in zhudan:
+                if c.name == str(self.now_level):
+                    level_card = c
+                    break
+            if level_card:
+                return [level_card]
             return [zhudan[0]]
+
+        # 4. 出副小单（最后手段）
+        for color in sorted(fudan.keys()):
+            if fudan[color]:
+                nonscore = [c for c in fudan[color] if not c.has_score]
+                if nonscore:
+                    return [nonscore[0]]
+                return [fudan[color][0]]
 
         return []
 
@@ -1359,52 +1134,41 @@ class AI:
 
     def _follow_fudan(self, first_card, epoch_cards, epoch_players,
                       zhudan, fudan, now_scores) -> list[Card]:
-        """跟副单（v10真人经验版）
+        """跟副单（v9.13）
 
-        v10核心改动（基于真人经验）：
-        1. 队友赢+贴分：5分牌不无脑贴（5有赢轮潜力时留着自己赢轮跑掉）
-        2. 不确定队友赢：有能控场的副牌就出，防止对手控场
-        3. 绝门毙牌：用_best_trump_card_for_kill选最优主牌
-        4. 队友赢+绝门：5分主牌也酌情保留（不是无脑贴）
+        关键改进：
+        - v9.13: 修复同花色判断——当该花色只有对子/连对时，也视为"有同花色"，
+          需要拆对出单牌，不能误判为绝门
+        - 队友大→优先贴分牌（分牌的最佳去处！）
+        - 对手大+有同花色→用最小能管住的牌管，管不住出最小无分牌
+        - 绝门+对手大→毙牌（出最小主牌）
+        - 绝门+队友大→贴分牌（不是副小牌）
         """
         color = first_card.color
         my_team_winning = self._is_team_winning(epoch_cards, epoch_players)
-        epoch_score = self._count_epoch_score(epoch_cards)
+        is_banker = self._is_banker_team()
 
         # v9.13: 用_has_color_cards判断是否有同花色（含对子/连对/主牌）
+        # 同时获取可用于跟单牌的散牌列表（含拆对出的牌+该花色主牌）
         a = self._get_analysis()
         has_color = self._has_color_cards(color)
         color_singles = self._get_color_single_cards(color, fudan, a['fudui'], a['fuliandui'], zhudan)
 
         if has_color and color_singles:
-            # ===== 有同花色 =====
+            # 有同花色（v9.13: color_singles包含从对子/连对拆出的散牌）
             if my_team_winning:
-                # v11: 队友赢→庄闲差异化贴分
-                if self.player.is_banker:
-                    # 庄家：队友赢→不贴分牌（庄家不靠得分赢，保留分牌）
-                    # 出最小无分牌
-                    non_score = [c for c in color_singles if not c.has_score]
-                    if non_score:
-                        return [non_score[0]]
-                    # 只有分牌→出最小（保留大牌）
-                    return [color_singles[0]]
-                else:
-                    # 闲家：队友赢→积极贴分牌（得分过80=闲家赢）
-                    score_cards = [c for c in color_singles if c.has_score]
-                    if score_cards:
-                        # 5分牌有赢轮潜力就留着
-                        safe_score = [c for c in score_cards if not self._5_has_winning_potential(c)]
-                        if safe_score:
-                            return [safe_score[0]]
-                        return [score_cards[0]]
-                    # 没分牌出最小
-                    return [color_singles[0]]
+                # 队友大→v9: 积极贴分牌（分牌最安全的去处）
+                score_cards = [c for c in color_singles if c.has_score]
+                if score_cards:
+                    return [score_cards[0]]  # 出最小分牌
+                return [color_singles[0]]  # 没分牌出最小
             else:
-                # ===== 对手赢→尝试管住 =====
+                # 对手大→出最小能管住的牌
                 current_best = self._get_current_winning_card(epoch_cards)
+                epoch_score = self._count_epoch_score(epoch_cards)
 
-                # v10: 不确定队友是否赢轮（自己不是最后出牌）时，如果有能管住的牌就管
                 if current_best:
+                    # v9: 不管什么身份，有分就认真管（≥5分）
                     should_play_big = epoch_score >= 5
                     search_order = reversed(color_singles) if should_play_big else color_singles
                     for card in search_order:
@@ -1416,114 +1180,86 @@ class AI:
                         if compare_outcards([card], [first_card],
                                             self.now_level, self.now_color):
                             return [card]
-                # 管不住→庄家保护5/K，闲家出最小牌
+                # 管不住→v9: 出最小无分牌，绝不送分！
                 non_score = [c for c in color_singles if not c.has_score]
                 if non_score:
                     return [non_score[0]]
-                # v12: 庄家管不住+只有分牌→5/K不出（除非只剩1张）
-                if self.player.is_banker:
-                    # 优先出5（5分vs K的10分，损失更小）
-                    five_cards = [c for c in color_singles if c.score == 5]
-                    if five_cards:
-                        return [five_cards[0]]
-                    # 只有10/K→无奈出最小
-                    return [color_singles[0]]
-                # 闲家：5分牌有赢轮潜力则保留
-                safe = [c for c in color_singles if not self._5_has_winning_potential(c)]
-                if safe:
-                    return [safe[0]]
+                # 全是分牌没办法
                 return [color_singles[0]]
 
-        # ===== 绝门 =====
+        # 绝门
         if my_team_winning:
-            # v11: 队友赢+绝门→庄闲差异化
-            if self.player.is_banker:
-                # 庄家：队友赢+绝门→不贴分牌（保留分牌，庄家不靠得分赢）
+            # v9.4: 只有最后一轮+底牌有分时不贴分（防扣底）
+            # 之前最后3轮都不贴分太保守了
+            if self._is_last_trick() and self.score_koupai > 0:
                 non_score_fudan = self._get_non_score_fudan()
                 if non_score_fudan:
-                    nonscore_by_color = {}
-                    for c in non_score_fudan:
-                        cl = c.color
-                        if cl not in nonscore_by_color:
-                            nonscore_by_color[cl] = []
-                        nonscore_by_color[cl].append(c)
-                    colors_by_len = sorted(nonscore_by_color.keys(),
-                        key=lambda cl: self._get_color_card_count(cl))
-                    return [nonscore_by_color[colors_by_len[0]][0]]
-                if zhudan:
-                    nonscore_zhu = [c for c in zhudan if not c.has_score]
-                    if nonscore_zhu:
-                        return [nonscore_zhu[0]]
-                    return [zhudan[0]]
-            else:
-                # 闲家：队友赢+绝门→积极贴分牌（得分过80=闲家赢）
-                if self._is_last_trick() and self.score_koupai > 0:
-                    non_score_fudan = self._get_non_score_fudan()
-                    if non_score_fudan:
-                        return [non_score_fudan[0]]
-                    for c in sorted(fudan.keys()):
-                        if fudan[c]:
-                            return [fudan[c][0]]
-
-                # 优先贴短门花色的分牌（创造绝门）
-                score_fudan = self._get_score_fudan()
-                if score_fudan:
-                    scored_by_color = {}
-                    for c in score_fudan:
-                        cl = c.color
-                        if cl not in scored_by_color:
-                            scored_by_color[cl] = []
-                        scored_by_color[cl].append(c)
-                    safe_by_color = {}
-                    for cl, cards in scored_by_color.items():
-                        safe = [c for c in cards if not self._5_has_winning_potential(c)]
-                        if safe:
-                            safe_by_color[cl] = safe
-                    if safe_by_color:
-                        colors_by_len = sorted(safe_by_color.keys(),
-                            key=lambda cl: self._get_color_card_count(cl))
-                        return [max(safe_by_color[colors_by_len[0]], key=lambda c: c.score)]
-
-                # 无可安全贴的分牌→出短门无分牌
-                non_score_fudan = self._get_non_score_fudan()
-                if non_score_fudan:
-                    nonscore_by_color = {}
-                    for c in non_score_fudan:
-                        cl = c.color
-                        if cl not in nonscore_by_color:
-                            nonscore_by_color[cl] = []
-                        nonscore_by_color[cl].append(c)
-                    colors_by_len = sorted(nonscore_by_color.keys(),
-                        key=lambda cl: self._get_color_card_count(cl))
-                    return [nonscore_by_color[colors_by_len[0]][0]]
-                if zhudan:
-                    nonscore_zhu = [c for c in zhudan if not c.has_score]
-                    if nonscore_zhu:
-                        return [nonscore_zhu[0]]
-                    return [zhudan[0]]
+                    return [non_score_fudan[0]]
+                for c in sorted(fudan.keys()):
+                    if fudan[c]:
+                        return [fudan[c][0]]
+            # v9.11: 队友大→优先贴短门花色的分牌（创造更多绝门）
+            # 短门花色出完=绝门+1，后续毙牌机会大增
+            score_fudan = self._get_score_fudan()
+            if score_fudan:
+                # 按花色牌数排序，短门优先
+                scored_by_color = {}
+                for c in score_fudan:
+                    color = c.color
+                    if color not in scored_by_color:
+                        scored_by_color[color] = []
+                    scored_by_color[color].append(c)
+                
+                # 短门优先：该花色总牌数少的先贴
+                colors_by_len = sorted(scored_by_color.keys(),
+                    key=lambda cl: self._get_color_card_count(cl))
+                # 短门花色中出最大分牌
+                for cl in colors_by_len:
+                    cards = scored_by_color[cl]
+                    return [max(cards, key=lambda c: c.score)]
+            
+            non_score_fudan = self._get_non_score_fudan()
+            if non_score_fudan:
+                # v9.11: 无分牌也按短门优先
+                nonscore_by_color = {}
+                for c in non_score_fudan:
+                    cl = c.color
+                    if cl not in nonscore_by_color:
+                        nonscore_by_color[cl] = []
+                    nonscore_by_color[cl].append(c)
+                colors_by_len = sorted(nonscore_by_color.keys(),
+                    key=lambda cl: self._get_color_card_count(cl))
+                return [nonscore_by_color[colors_by_len[0]][0]]
+            if zhudan:
+                return [zhudan[0]]
         else:
-            # ===== 对手赢+绝门→毙牌（≥3分门槛）=====
+            # 对手大→毙牌
+            epoch_score = self._count_epoch_score(epoch_cards)
             should_trump = False
+            # v9.11: 双方5分毙牌阈值（3分让队1偏强，保持对称）
             if self._is_last_trick() and self.score_koupai > 0:
                 should_trump = True
             elif epoch_score >= 5:
                 should_trump = True
-            elif epoch_score >= 3 and zhudan:
-                # 闲家：≥3分+有主牌→毙
-                should_trump = True
 
             if should_trump and zhudan:
-                # v10: 用最优毙牌主牌选择
-                best_kill = self._best_trump_card_for_kill(epoch_score)
-                if best_kill:
-                    return [best_kill]
-                # 兜底
-                return [zhudan[0]]
+                # v9.2: 毙牌出牌选择——有分时用大主牌确保赢，小分时用小主牌省牌
+                if epoch_score >= 10 and len(zhudan) >= 2:
+                    # 高分轮→用较大主牌确保赢（避免被反毙丢分）
+                    return [zhudan[-1]]  # 出最大主牌
+                elif epoch_score >= 5:
+                    # 中分轮→用中间主牌
+                    mid = len(zhudan) // 2
+                    return [zhudan[mid]]
+                else:
+                    # 低分轮→出最小主牌（省大牌）
+                    return [zhudan[0]]
 
             # 不毙牌→出最小无分牌
             non_score_fudan = self._get_non_score_fudan()
             if non_score_fudan:
                 return [non_score_fudan[0]]
+            # v9.2: 无副牌可贴→出无分主牌（不送分）
             if zhudan:
                 nonscore_zhu = [c for c in zhudan if not c.has_score]
                 if nonscore_zhu:
@@ -1552,31 +1288,20 @@ class AI:
 
         if color in fudui and len(fudui[color]) >= 2:
             if my_team_winning:
-                # v11: 队友大→庄闲差异化贴分对
-                if self.player.is_banker:
-                    # 庄家：不贴分对（保留分牌）
-                    non_score_pairs = []
-                    for i in range(0, len(fudui[color]), 2):
-                        if i + 1 < len(fudui[color]) and fudui[color][i].name == fudui[color][i + 1].name:
-                            if not fudui[color][i].has_score:
-                                non_score_pairs.append(fudui[color][i:i + 2])
-                    if non_score_pairs:
-                        return non_score_pairs[0]
-                    return fudui[color][-2:]
-                else:
-                    # 闲家：积极贴分对
-                    score_pairs = []
-                    for i in range(0, len(fudui[color]), 2):
-                        if i + 1 < len(fudui[color]) and fudui[color][i].name == fudui[color][i + 1].name:
-                            if fudui[color][i].has_score:
-                                score_pairs.append(fudui[color][i:i + 2])
-                    if score_pairs:
-                        return score_pairs[0]
-                    return fudui[color][-2:]
+                # 队友大→贴分对
+                score_pairs = []
+                for i in range(0, len(fudui[color]), 2):
+                    if i + 1 < len(fudui[color]) and fudui[color][i].name == fudui[color][i + 1].name:
+                        if fudui[color][i].has_score:
+                            score_pairs.append(fudui[color][i:i + 2])
+                if score_pairs:
+                    return score_pairs[0]
+                return fudui[color][-2:]
             else:
                 # 对手大→出能管住的最小对
                 current_best = self._get_current_winning_card(epoch_cards)
                 target = current_best if current_best else [first_card, first_card]
+                # v9: ≥5分就用大牌管（与单牌一致）
                 epoch_score = self._count_epoch_score(epoch_cards)
                 should_play_big = epoch_score >= 5
                 order = range(len(fudui[color]) - 1, -1, -2) if should_play_big else range(0, len(fudui[color]), 2)
@@ -1585,7 +1310,7 @@ class AI:
                         if compare_outcards(fudui[color][i:i + 2], target,
                                             self.now_level, self.now_color):
                             return fudui[color][i:i + 2]
-                # 管不住→出无分对，分对留着自己先手出
+                # 管不住→v9: 出无分对，分对留着自己先手出
                 non_score_pairs = []
                 for i in range(0, len(fudui[color]), 2):
                     if i + 1 < len(fudui[color]) and fudui[color][i].name == fudui[color][i + 1].name:
@@ -1593,7 +1318,6 @@ class AI:
                             non_score_pairs.append(fudui[color][i:i + 2])
                 if non_score_pairs:
                     return non_score_pairs[0]
-                # 只有分对→庄家出最小分对减少损失
                 return fudui[color][:2]
 
         # v9.14: 有同花色但凑不到对子——必须检查同花色副牌是否有对子
@@ -1665,19 +1389,17 @@ class AI:
             if len(non_score_fudan) >= 2:
                 return non_score_fudan[:2]
         else:
-            # 对手赢+绝门→毙牌（≥3分门槛）
-            epoch_score = self._count_epoch_score(epoch_cards)
+            # 对手大→毙牌
+            # v9.11: 双方5分毙牌阈值
             should_trump = False
             if self._is_last_trick() and self.score_koupai > 0:
                 should_trump = True
             elif epoch_score >= 5:
                 should_trump = True
-            elif epoch_score >= 3 and len(zhudui) >= 2:
-                should_trump = True
 
             if should_trump and len(zhudui) >= 2:
-                # v10: 用最优毙牌策略
-                if len(self._opponent_void_colors) > 0 and epoch_score >= 5:
+                # v9.2: 副对毙牌——有分时出大主对确保赢
+                if epoch_score >= 10 and len(zhudui) >= 4:
                     return zhudui[-2:]  # 出最大主对
                 return zhudui[:2]
 
@@ -1805,77 +1527,41 @@ class AI:
 
         # 绝门
         if my_team_winning:
-            # v11: 队友大→庄闲差异化贴分
-            if self.player.is_banker:
-                # 庄家：不贴分牌→优先出无分副牌
-                non_score_fudan = self._get_non_score_fudan()
-                if len(non_score_fudan) >= n:
-                    return non_score_fudan[:n]
-                # 贴副连对
-                for other_color in sorted(fuliandui.keys()):
-                    for chain in fuliandui[other_color]:
-                        if len(chain) >= n:
-                            return chain[:n]
-                # 贴副对
-                a = self._get_analysis()
-                for other_color in sorted(a['fudui'].keys()):
-                    if len(a['fudui'][other_color]) >= 2:
-                        pair = a['fudui'][other_color][:2]
-                        if n <= 2:
-                            return pair
+            # v9.10f: 队友大→优先贴分牌（与副单/副对一致）
+            score_fudan = self._get_score_fudan()
+            if len(score_fudan) >= n:
+                # 有足够分牌散牌，贴最大的n张
+                return sorted(score_fudan, key=lambda c: -c.score)[:n]
+            # 贴副连对
+            for other_color in sorted(fuliandui.keys()):
+                for chain in fuliandui[other_color]:
+                    if len(chain) >= n:
+                        return chain[:n]
+            # 贴副对+分牌散牌组合
+            a = self._get_analysis()
+            for other_color in sorted(a['fudui'].keys()):
+                if len(a['fudui'][other_color]) >= 2:
+                    pair = a['fudui'][other_color][:2]
+                    if n <= 2:
+                        return pair
+                    # n>2时，副对+分牌凑数
+                    if score_fudan:
                         need = n - 2
-                        if non_score_fudan:
-                            extra = non_score_fudan[:need]
-                            if len(pair) + len(extra) >= n:
-                                return (pair + extra)[:n]
-                # 出最小无分牌
-                if non_score_fudan:
-                    return non_score_fudan[:n]
-                if zhudan:
-                    nonscore_zhu = [c for c in zhudan if not c.has_score]
-                    if nonscore_zhu:
-                        return nonscore_zhu[:n]
-                    return zhudan[:n]
-            else:
-                # 闲家：积极贴分牌（得分过80=闲家赢）
-                score_fudan = self._get_score_fudan()
-                if len(score_fudan) >= n:
-                    return sorted(score_fudan, key=lambda c: -c.score)[:n]
-                for other_color in sorted(fuliandui.keys()):
-                    for chain in fuliandui[other_color]:
-                        if len(chain) >= n:
-                            return chain[:n]
-                a = self._get_analysis()
-                for other_color in sorted(a['fudui'].keys()):
-                    if len(a['fudui'][other_color]) >= 2:
-                        pair = a['fudui'][other_color][:2]
-                        if n <= 2:
-                            return pair
-                        if score_fudan:
-                            need = n - 2
-                            extra = sorted(score_fudan, key=lambda c: -c.score)[:need]
-                            if len(extra) == need:
-                                return pair + extra
-                # 贴分牌散牌（不够n张则用无分牌凑）
-                if score_fudan:
-                    result = sorted(score_fudan, key=lambda c: -c.score)[:n]
-                    if len(result) < n:
-                        non_score = self._get_non_score_fudan()
-                        result += non_score[:n - len(result)]
-                    if len(result) == n:
-                        return result
+                        extra = sorted(score_fudan, key=lambda c: -c.score)[:need]
+                        if len(extra) == need:
+                            return pair + extra
+            # 贴分牌散牌（不够n张则用无分牌凑）
+            if score_fudan:
+                result = sorted(score_fudan, key=lambda c: -c.score)[:n]
+                if len(result) < n:
+                    non_score = self._get_non_score_fudan()
+                    result += non_score[:n - len(result)]
+                if len(result) == n:
+                    return result
         else:
-            # 对手赢+绝门→毙牌（≥3分门槛）
+            # v9: ≥5分就毙（与单牌一致）
             epoch_score = self._count_epoch_score(epoch_cards)
-            should_trump = False
-            if self._is_last_trick() and self.score_koupai > 0:
-                should_trump = True
-            elif epoch_score >= 5:
-                should_trump = True
-            elif epoch_score >= 3 and zhuliandui:
-                should_trump = True
-
-            if should_trump:
+            if not is_banker or epoch_score >= 5:
                 for chain in zhuliandui:
                     if len(chain) >= n:
                         return chain[:n]
@@ -1894,19 +1580,11 @@ class AI:
 
         if zhudan:
             if my_team_winning:
-                # v11: 队友大→庄闲差异化
-                if self.player.is_banker:
-                    # 庄家：不贴分主牌→出最小无分主牌
-                    nonscore_zhu = [c for c in zhudan if not c.has_score]
-                    if nonscore_zhu:
-                        return [nonscore_zhu[0]]
-                    return [zhudan[0]]
-                else:
-                    # 闲家：积极贴分主牌
-                    score_zhudan = [c for c in zhudan if c.has_score]
-                    if score_zhudan:
-                        return [max(score_zhudan, key=lambda c: c.score)]
-                    return [zhudan[0]]
+                # v9.10: 队友大→贴最大分主牌（K/10=10分）
+                score_zhudan = [c for c in zhudan if c.has_score]
+                if score_zhudan:
+                    return [max(score_zhudan, key=lambda c: c.score)]
+                return [zhudan[0]]
             else:
                 # 对手大→尝试管住
                 current_best = self._get_current_winning_card(epoch_cards)
@@ -1943,28 +1621,16 @@ class AI:
 
         if len(zhudui) >= 2:
             if my_team_winning:
-                # v11: 队友大→庄闲差异化
-                if self.player.is_banker:
-                    # 庄家：不贴分主对→出最小无分主对
-                    nonscore_pairs = []
-                    for i in range(0, len(zhudui), 2):
-                        if i + 1 < len(zhudui) and zhudui[i].name == zhudui[i + 1].name:
-                            if not zhudui[i].has_score:
-                                nonscore_pairs.append(zhudui[i:i + 2])
-                    if nonscore_pairs:
-                        return nonscore_pairs[0]
-                    return zhudui[:2]
-                else:
-                    # 闲家：积极贴分主对
-                    score_pairs = []
-                    for i in range(0, len(zhudui), 2):
-                        if i + 1 < len(zhudui) and zhudui[i].name == zhudui[i + 1].name:
-                            if zhudui[i].has_score:
-                                score_pairs.append((zhudui[i:i + 2], zhudui[i].score))
-                    if score_pairs:
-                        score_pairs.sort(key=lambda x: -x[1])
-                        return score_pairs[0][0]
-                    return zhudui[:2]
+                # v9.10: 队友大→贴最大分主对
+                score_pairs = []
+                for i in range(0, len(zhudui), 2):
+                    if i + 1 < len(zhudui) and zhudui[i].name == zhudui[i + 1].name:
+                        if zhudui[i].has_score:
+                            score_pairs.append((zhudui[i:i + 2], zhudui[i].score))
+                if score_pairs:
+                    score_pairs.sort(key=lambda x: -x[1])
+                    return score_pairs[0][0]  # 贴最大分的对子
+                return zhudui[:2]
             else:
                 # 对手大→尝试管住
                 current_best = self._get_current_winning_card(epoch_cards)

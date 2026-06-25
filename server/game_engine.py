@@ -32,6 +32,12 @@ class Player:
     is_robot: bool = False
     ready: bool = False
     client_id: str = ''
+    # v10.1: AI追踪状态持久化（跨decide_play调用）
+    ai_tracking: dict = field(default_factory=lambda: {
+        'played_tricks': 0,
+        'mate_void_colors': set(),
+        'opponent_void_colors': set(),
+    })
 
     @property
     def card_count(self) -> int:
@@ -375,6 +381,13 @@ class GameRoom:
             self.players[i].cards_in_hand = hands[i]
             self.players[i].is_banker = False  # 会在_set_bankers中重新设置
             self.players[i].ready = False
+            # v10.1: 重置AI追踪状态
+            if hasattr(self.players[i], 'ai_tracking'):
+                self.players[i].ai_tracking = {
+                    'played_tricks': 0,
+                    'mate_void_colors': set(),
+                    'opponent_void_colors': set(),
+                }
 
         self.phase = GamePhase.LIANGZHU
         self.score_now = 0
@@ -958,14 +971,39 @@ class GameRoom:
                             options.append({'cards': [c.card_type for c in chain_cards],
                                             'label': '跟连对'})
 
-                # 没有连对时，出同花色单牌
+                # 没有连对时，必须凑齐n张出牌
                 if not options:
-                    for c in color_cards[:n]:
-                        options.append({'cards': [c.card_type for c in color_cards[:min(n, len(color_cards))]],
-                                        'label': '跟牌'})
-                    if not color_cards:
-                        for c in all_cards:
-                            options.append({'cards': [c.card_type], 'label': '绝门'})
+                    if len(color_cards) >= n:
+                        # 同花色够n张：出n张同花色散牌
+                        # 枚举不同的同花色组合（避免爆炸，取前几组）
+                        from itertools import combinations
+                        combos = list(combinations(range(len(color_cards)), n))[:20]
+                        for combo in combos:
+                            chosen = [color_cards[i] for i in combo]
+                            options.append({'cards': [c.card_type for c in chosen],
+                                            'label': '跟连对散牌'})
+                    else:
+                        # 同花色不够n张：先出完同花色，再用其他牌补齐
+                        fu_rest = [c for c in all_cards
+                                   if c not in color_cards
+                                   and not c.is_zhu(self.now_level, self.now_color)]
+                        zhu_rest = [c for c in all_cards
+                                    if c.is_zhu(self.now_level, self.now_color)
+                                    and c not in color_cards]
+                        # 优先用副牌补，再用主牌补
+                        supplement = fu_rest + zhu_rest
+                        need = n - len(color_cards)
+                        if len(supplement) >= need:
+                            from itertools import combinations
+                            combos = list(combinations(range(len(supplement)), need))[:10]
+                            for combo in combos:
+                                chosen = list(color_cards) + [supplement[i] for i in combo]
+                                options.append({'cards': [c.card_type for c in chosen],
+                                                'label': '跟连对补牌'})
+                        else:
+                            # 全部出完（手牌不够n张）
+                            options.append({'cards': [c.card_type for c in all_cards],
+                                            'label': '跟连对全出'})
 
             elif first_type in ('zhudan',):
                 # 跟主单：出主牌
@@ -2102,6 +2140,7 @@ class GameRoom:
                         })
 
             elif self.phase == GamePhase.PLAYING and i == self.current_turn:
+                # 规则AI出牌
                 ai = AI(p, self.now_level, self.now_color, self.score_koupai)
                 is_first = len(self.epoch_cards) == 0
                 play_cards = ai.decide_play(
@@ -2131,33 +2170,90 @@ class GameRoom:
         actions = []
 
         if self.phase == GamePhase.LIANGZHU:
-            # 所有机器人同时评估亮主意愿
-            liang_candidates = []
+            # 按队伍分别评估亮主意愿
+            import random
+            
+            def _get_liang_priority(cards):
+                """从亮主牌推断牌型优先级（越小越强）"""
+                flag, liang_type = self._check_liang(cards)
+                if flag:
+                    return LIANG_TYPE_RANK.get(liang_type, 99)
+                return 99
+            
+            team0_candidates = []  # seats 0,2
+            team1_candidates = []  # seats 1,3
             
             for i, p in enumerate(self.players):
                 if p and p.is_robot and not p.ready:
-                    # 同队已有人亮主，跳过
-                    if self.liangzhu_player is not None and (i % 2) == (self.liangzhu_player % 2):
-                        p.ready = True
-                        continue
                     ai = AI(p, self.now_level, self.now_color, self.score_koupai)
                     liang_cards = ai.decide_liangzhu()
                     hand_score = ai.evaluate_hand()
                     p.ready = True
                     if liang_cards:
-                        liang_candidates.append((i, liang_cards, hand_score))
+                        liang_priority = _get_liang_priority(liang_cards)
+                        # 综合排序：优先牌型好(低priority)，其次手牌强(高score)
+                        composite = liang_priority * 10 - hand_score / 20.0
+                        if i % 2 == 0:
+                            team0_candidates.append((i, liang_cards, hand_score, liang_priority, composite))
+                        else:
+                            team1_candidates.append((i, liang_cards, hand_score, liang_priority, composite))
 
-            if liang_candidates:
-                # 手牌最强的亮主
-                liang_candidates.sort(key=lambda x: -x[2])
-                best_seat, best_cards, _ = liang_candidates[0]
-                card_strs = [c.card_type for c in best_cards]
-                result = self.handle_liangzhu(best_seat, card_strs)
+            # 同队内选综合最强的亮主（composite最小=牌型最好+手牌最强）
+            team0_best = min(team0_candidates, key=lambda x: x[4]) if team0_candidates else None
+            team1_best = min(team1_candidates, key=lambda x: x[4]) if team1_candidates else None
+
+            if team0_best and team1_best:
+                # 两队都想亮主 → 随机决定谁是亮主者谁是吃牌者
+                if random.random() < 0.5:
+                    liangzhu_best, chipai_best = team0_best, team1_best
+                else:
+                    liangzhu_best, chipai_best = team1_best, team0_best
+                
+                # 亮主者先亮
+                card_strs = [c.card_type for c in liangzhu_best[1]]
+                result = self.handle_liangzhu(liangzhu_best[0], card_strs)
                 if result['status'] == 'ok':
                     actions.append({
                         'type': 'liangzhu',
-                        'seat': best_seat,
-                        'cards': [c.to_dict() for c in best_cards],
+                        'seat': liangzhu_best[0],
+                        'cards': [c.to_dict() for c in liangzhu_best[1]],
+                        'result': result,
+                    })
+                    # 吃牌者尝试吃牌
+                    chipai_card_strs = [c.card_type for c in chipai_best[1]]
+                    liang_result = self.handle_liangzhu(chipai_best[0], chipai_card_strs)
+                    if liang_result['status'] == 'ok':
+                        actions.append({
+                            'type': 'liangzhu',
+                            'seat': chipai_best[0],
+                            'cards': [c.to_dict() for c in chipai_best[1]],
+                            'result': liang_result,
+                        })
+                        claim_result = self.handle_chipai_claim(chipai_best[0])
+                        if claim_result['status'] == 'ok':
+                            actions.append({
+                                'type': 'chipai_claim',
+                                'seat': chipai_best[0],
+                                'result': claim_result,
+                            })
+                    else:
+                        # 吃牌牌型不够大，pass
+                        pass_result = self.handle_chipai_pass(chipai_best[0])
+                        actions.append({
+                            'type': 'chipai_pass',
+                            'seat': chipai_best[0],
+                            'result': pass_result,
+                        })
+            elif team0_best or team1_best:
+                # 只有一队想亮主
+                best = team0_best or team1_best
+                card_strs = [c.card_type for c in best[1]]
+                result = self.handle_liangzhu(best[0], card_strs)
+                if result['status'] == 'ok':
+                    actions.append({
+                        'type': 'liangzhu',
+                        'seat': best[0],
+                        'cards': [c.to_dict() for c in best[1]],
                         'result': result,
                     })
             else:
@@ -2291,6 +2387,7 @@ class GameRoom:
 
             p = self.players[self.current_turn]
             if p and p.is_robot:
+                # 规则AI出牌
                 ai = AI(p, self.now_level, self.now_color, self.score_koupai)
                 is_first = len(self.epoch_cards) == 0
                 play_cards = ai.decide_play(
@@ -2307,28 +2404,6 @@ class GameRoom:
                             'cards': [c.to_dict() for c in play_cards],
                             'result': result,
                         })
-                    else:
-                        # AI出牌非法，用安全出牌fallback
-                        fallback = self._safe_play_fallback(p)
-                        if fallback:
-                            result = self.handle_play(self.current_turn, fallback)
-                            if result['status'] == 'ok':
-                                actions.append({
-                                    'type': 'play',
-                                    'seat': self.current_turn,
-                                    'result': result,
-                                })
-                else:
-                    # AI返回空，用安全出牌fallback
-                    fallback = self._safe_play_fallback(p)
-                    if fallback:
-                        result = self.handle_play(self.current_turn, fallback)
-                        if result['status'] == 'ok':
-                            actions.append({
-                                'type': 'play',
-                                'seat': self.current_turn,
-                                'result': result,
-                            })
 
         return actions
 

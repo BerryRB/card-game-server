@@ -118,11 +118,45 @@ class ShengjiGame:
         self.num_players = 4
         self.reset()
     
-    def reset(self):
-        """初始化一局游戏"""
+    def reset(self, init_level=None, init_bankers=None):
+        """初始化一局游戏
+        
+        Args:
+            init_level: 起始级牌(如'A','2',...,'K')，None则默认
+            init_bankers: 初始庄家[seat0, seat2]或[seat1, seat3]，None则由亮主决定
+        """
         from server.game_engine import GameRoom
         self.room = GameRoom('rl_train')
+        
+        # 先调一次start_game填充机器人players
         self.room.start_game()
+        
+        # 如果指定了初始level，设置player_level
+        LEVEL_IDX = {'A':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13}
+        if init_level is not None:
+            for p in self.room.players:
+                if p:
+                    p.player_level = LEVEL_IDX.get(init_level, 1)
+        
+        # 如果指定了初始庄家，设置bankers+game_num
+        # game_num=2让_set_bankers走"后续局"分支，保留bankers不被亮主覆盖
+        if init_bankers is not None:
+            self.room.bankers = list(init_bankers)
+            self.room.game_num = 2
+            for s in init_bankers:
+                if self.room.players[s]:
+                    if init_level is not None:
+                        self.room.players[s].player_level = LEVEL_IDX.get(init_level, 1)
+        
+        # 重新start_game，用新level/bankers
+        self.room.start_game()
+        
+        # 修正now_level：start_game会用_banker_level_name重置now_level
+        # 如果指定了init_level但没指定init_bankers，_banker_level_name可能读到旧值
+        if init_level is not None:
+            from server.constants import LEVEL_ORDER
+            level_idx = LEVEL_IDX.get(init_level, 1) - 1
+            self.room.now_level = LEVEL_ORDER[level_idx % len(LEVEL_ORDER)]
         
         # 自动完成到出牌阶段
         self._auto_play_to_playing()
@@ -134,6 +168,7 @@ class ShengjiGame:
         self.game_over = False
         self.payoffs = None
         self.trick_rewards = [0.0] * 4  # 每步即时奖励缓存
+        self.room.epoch_history = []  # 初始化出牌历史，用于obs编码
     
     def _auto_play_to_playing(self):
         """自动完成亮主/吃牌/扣牌/换牌阶段"""
@@ -203,7 +238,11 @@ class ShengjiGame:
         if not all_cards:
             return []
         
-        is_first = len(self.room.epoch_cards) == 0
+        # 判断是否领出：epoch_cards延迟清空(_pending_clear_epoch)，
+        # 墩结束后epoch_cards还保留上一墩数据但epoch_players已清空，
+        # 所以必须同时考虑pending_clear和epoch_cards是否为空
+        pending_clear = getattr(self.room, '_pending_clear_epoch', False)
+        is_first = (len(self.room.epoch_cards) == 0) or pending_clear
         
         # 直接使用game_engine的枚举逻辑
         options = self.room._enumerate_legal_plays(player, is_first)
@@ -326,9 +365,7 @@ class ShengjiGame:
                 if same_color:
                     for c in same_color:
                         combos.append([c])
-                    # 可毙牌
-                    for c in zhu_cards:
-                        combos.append([c])
+                    # 规则v3: 有同花色副牌时不可用主牌替代，只能出副牌
                 else:
                     for c in hand:
                         combos.append([c])
@@ -462,18 +499,31 @@ class ShengjiGame:
         return state, next_player, reward, self.game_over
     
     def _compute_payoffs(self, game_over_info: dict) -> np.ndarray:
-        """计算最终payoff"""
+        """计算最终payoff（7档，与training env一致）"""
         score_now = game_over_info.get('score_now', 0)
-        banker_team = game_over_info.get('banker_team', 0)
+        # 用_initial_bankers（在游戏开始时记录）避免夺庄后bankers改变
+        bankers = getattr(self, '_initial_bankers', None) or self.room.bankers or [0, 2]
+        banker_team = bankers[0] % 2
         
-        if score_now >= 80:
-            bp, dp = -1.0, 1.0
+        # 9档payoff：闲家得分决定庄家/闲家胜幅度（V37: 拆分60-79/80-99区间增加庄家梯度）
+        if score_now >= 200:
+            bp, dp = -2.5, 2.5    # 闲家大胜
+        elif score_now >= 160:
+            bp, dp = -2.0, 2.0    # 闲家+2级
+        elif score_now >= 120:
+            bp, dp = -1.5, 1.5    # 闲家+1级
+        elif score_now >= 100:
+            bp, dp = -1.0, 1.0    # 闲家过庄
+        elif score_now >= 80:
+            bp, dp = -0.5, 0.5    # 闲家险胜（原-1.0→-0.5，给庄家"差一点"的梯度）
+        elif score_now >= 60:
+            bp, dp = 0.5, -0.5    # 庄家险胜（原+1.0→+0.5，区分险胜vs小胜）
         elif score_now >= 40:
-            bp, dp = 1.0, -1.0
+            bp, dp = 1.0, -1.0    # 庄家小胜
         elif score_now > 0:
-            bp, dp = 1.5, -1.5
+            bp, dp = 1.5, -1.5    # 庄家中胜
         else:
-            bp, dp = 2.0, -2.0
+            bp, dp = 2.0, -2.0    # 光头
         
         payoffs = np.zeros(4)
         for i in range(4):
@@ -573,7 +623,7 @@ class ShengjiGame:
         score_rep = np.zeros(20, dtype=np.float32)
         score_bucket_0 = min(int(self.room.score_now / 20), 9)
         score_rep[score_bucket_0] = 1.0
-        banker_score = max(0, 100 - self.room.score_now)
+        banker_score = max(0, 200 - self.room.score_now)
         score_bucket_1 = min(int(banker_score / 20), 9) + 10
         score_rep[score_bucket_1] = 1.0
         
@@ -590,14 +640,15 @@ class ShengjiGame:
     def get_payoffs(self) -> np.ndarray:
         if self.payoffs is not None:
             return self.payoffs
-        # 游戏未正常结束，基于当前分数估算
+        # 游戏未正常结束，基于当前分数估算（7档简化版）
         score_now = getattr(self.room, 'score_now', 50)
         if score_now >= 80:
-            bp, dp = -0.5, 0.5
+            bp, dp = -1.0, 1.0
+        elif score_now >= 40:
+            bp, dp = 1.0, -1.0
         else:
-            bp, dp = 0.5, -0.5
+            bp, dp = 1.5, -1.5
         payoffs = np.zeros(4)
-        # 用_initial_bankers（在游戏开始时记录）避免夺庄后bankers改变
         bankers = getattr(self, '_initial_bankers', None) or self.room.bankers or [0, 2]
         banker_team = bankers[0] % 2
         for i in range(4):
@@ -606,6 +657,102 @@ class ShengjiGame:
             else:
                 payoffs[i] = dp
         return payoffs
+
+    def save_state(self) -> dict:
+        """保存当前游戏所有可变状态，用于MCTS的save/restore替代deepcopy。
+
+        保存范围：ShengjiGame属性 + GameRoom属性 + 每个Player的手牌。
+        Card对象本身不可变，仅需浅拷贝容器结构。
+        """
+        room = self.room
+        # 保存每个player的手牌（cards_in_hand是dict[str, list[Card]]）
+        player_hands = []
+        player_extras = []
+        for p in room.players:
+            if p is not None:
+                # 浅拷贝dict和内部list，Card对象共享（不可变）
+                hands = {k: list(v) for k, v in p.cards_in_hand.items()}
+                player_hands.append(hands)
+                player_extras.append({
+                    'is_banker': p.is_banker,
+                    'player_level': p.player_level,
+                    'ready': p.ready,
+                })
+            else:
+                player_hands.append(None)
+                player_extras.append(None)
+
+        state = {
+            # ShengjiGame 层
+            'step_count': self.step_count,
+            'game_over': self.game_over,
+            'payoffs': self.payoffs.copy() if self.payoffs is not None else None,
+            'trick_rewards': list(self.trick_rewards),
+            '_initial_bankers': list(self._initial_bankers),
+            # GameRoom 层
+            'phase': room.phase,
+            'current_turn': room.current_turn,
+            'epoch_cards': [list(cards) for cards in room.epoch_cards],
+            'epoch_players': list(room.epoch_players),
+            'epoch_count': room.epoch_count,
+            'last_epoch_cards': [list(cards) for cards in room.last_epoch_cards],
+            'last_epoch_players': list(room.last_epoch_players),
+            'last_epoch_winner': room.last_epoch_winner,
+            'score_now': room.score_now,
+            'score_koupai': room.score_koupai,
+            'round_num': room.round_num,
+            'game_result': room.game_result,
+            '_pending_clear_epoch': getattr(room, '_pending_clear_epoch', False),
+            'messages': list(room.messages),
+            'epoch_history': list(getattr(room, 'epoch_history', [])),
+            'now_level': room.now_level,
+            'now_color': room.now_color,
+            'bankers': list(room.bankers),
+            # Player 层
+            'player_hands': player_hands,
+            'player_extras': player_extras,
+        }
+        return state
+
+    def restore_state(self, state: dict):
+        """从save_state()的快照恢复游戏状态。"""
+        room = self.room
+        # ShengjiGame 层
+        self.step_count = state['step_count']
+        self.game_over = state['game_over']
+        self.payoffs = state['payoffs'].copy() if state['payoffs'] is not None else None
+        self.trick_rewards = list(state['trick_rewards'])
+        self._initial_bankers = list(state['_initial_bankers'])
+        # GameRoom 层
+        room.phase = state['phase']
+        room.current_turn = state['current_turn']
+        room.epoch_cards = [list(cards) for cards in state['epoch_cards']]
+        room.epoch_players = list(state['epoch_players'])
+        room.epoch_count = state['epoch_count']
+        room.last_epoch_cards = [list(cards) for cards in state['last_epoch_cards']]
+        room.last_epoch_players = list(state['last_epoch_players'])
+        room.last_epoch_winner = state['last_epoch_winner']
+        room.score_now = state['score_now']
+        room.score_koupai = state['score_koupai']
+        room.round_num = state['round_num']
+        room.game_result = state['game_result']
+        room._pending_clear_epoch = state['_pending_clear_epoch']
+        room.messages = list(state['messages'])
+        room.epoch_history = list(state['epoch_history'])
+        room.now_level = state['now_level']
+        room.now_color = state['now_color']
+        room.bankers = list(state['bankers'])
+        # Player 层
+        player_hands = state['player_hands']
+        player_extras = state['player_extras']
+        for i in range(4):
+            p = room.players[i]
+            if p is not None and player_hands[i] is not None:
+                p.cards_in_hand = {k: list(v) for k, v in player_hands[i].items()}
+                extras = player_extras[i]
+                p.is_banker = extras['is_banker']
+                p.player_level = extras['player_level']
+                p.ready = extras['ready']
 
 
 # ============================================================
